@@ -202,6 +202,10 @@ def register_routes(app):
     def api_route_traffic(route_id):
         """Get traffic analysis data for a specific route"""
         try:
+            # Import necessary modules
+            import random
+            from datetime import datetime
+            
             # Validate the route exists
             route = db.session.query(Route).get(route_id)
             
@@ -213,6 +217,7 @@ def register_routes(app):
             # For this example, we'll generate simulated traffic data
                 
             # Get the route stops
+            from models import ScheduledStop
             scheduled_stops = db.session.query(ScheduledStop).filter_by(
                 route_id=route_id
             ).order_by(ScheduledStop.stop_sequence).all()
@@ -248,10 +253,6 @@ def register_routes(app):
                     lat = start_stop['latitude'] + ratio * (end_stop['latitude'] - start_stop['latitude'])
                     lng = start_stop['longitude'] + ratio * (end_stop['longitude'] - start_stop['longitude'])
                     
-                    # Generate random congestion level (higher near cities)
-                    # This is where real traffic data would be used
-                    import random
-                    
                     # Cities in India with typically higher traffic
                     major_cities = [
                         {'name': 'Delhi', 'lat': 28.7041, 'lng': 77.1025},
@@ -274,7 +275,6 @@ def register_routes(app):
                             break
                     
                     # Add time-based variation (rush hours)
-                    from datetime import datetime
                     current_hour = datetime.now().hour
                     
                     # Rush hours typically 8-10 AM and 5-7 PM

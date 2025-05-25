@@ -135,8 +135,11 @@
     <div class="col-lg-8 mb-3">
         <div class="card h-100">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0"><i class="fas fa-map-marked-alt me-2"></i>Live Bus Tracking</h5>
+                <h5 class="mb-0"><i class="fas fa-map-marked-alt me-2"></i>Live Bus Tracking (India)</h5>
                 <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-sm btn-outline-primary" id="traffic-toggle-btn">
+                        <i class="fas fa-car me-1"></i> Traffic
+                    </button>
                     <button type="button" class="btn btn-sm btn-outline-primary" id="refresh-map">
                         <i class="fas fa-sync-alt me-1"></i> Refresh
                     </button>
@@ -145,8 +148,76 @@
                     </button>
                 </div>
             </div>
-            <div class="card-body p-0">
+            <div class="card-body p-0 position-relative">
                 <div id="map"></div>
+                
+                <!-- Traffic Analysis Panel -->
+                <div class="traffic-analysis-panel" id="traffic-analysis-panel" style="display: none;">
+                    <h6><i class="fas fa-traffic-light me-2"></i>Traffic Analysis</h6>
+                    <p class="mb-2">Current traffic conditions in major Indian cities:</p>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="list-group list-group-flush" id="traffic-cities-list">
+                                <div class="list-group-item d-flex justify-content-between align-items-center">
+                                    <span>Delhi</span>
+                                    <div class="progress" style="width: 70%">
+                                        <div class="progress-bar bg-danger" role="progressbar" style="width: 85%" aria-valuenow="85" aria-valuemin="0" aria-valuemax="100"></div>
+                                    </div>
+                                </div>
+                                <div class="list-group-item d-flex justify-content-between align-items-center">
+                                    <span>Mumbai</span>
+                                    <div class="progress" style="width: 70%">
+                                        <div class="progress-bar bg-danger" role="progressbar" style="width: 80%" aria-valuenow="80" aria-valuemin="0" aria-valuemax="100"></div>
+                                    </div>
+                                </div>
+                                <div class="list-group-item d-flex justify-content-between align-items-center">
+                                    <span>Bangalore</span>
+                                    <div class="progress" style="width: 70%">
+                                        <div class="progress-bar bg-warning" role="progressbar" style="width: 65%" aria-valuenow="65" aria-valuemin="0" aria-valuemax="100"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="list-group list-group-flush">
+                                <div class="list-group-item d-flex justify-content-between align-items-center">
+                                    <span>Chennai</span>
+                                    <div class="progress" style="width: 70%">
+                                        <div class="progress-bar bg-warning" role="progressbar" style="width: 60%" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100"></div>
+                                    </div>
+                                </div>
+                                <div class="list-group-item d-flex justify-content-between align-items-center">
+                                    <span>Hyderabad</span>
+                                    <div class="progress" style="width: 70%">
+                                        <div class="progress-bar bg-success" role="progressbar" style="width: 40%" aria-valuenow="40" aria-valuemin="0" aria-valuemax="100"></div>
+                                    </div>
+                                </div>
+                                <div class="list-group-item d-flex justify-content-between align-items-center">
+                                    <span>Kolkata</span>
+                                    <div class="progress" style="width: 70%">
+                                        <div class="progress-bar bg-warning" role="progressbar" style="width: 55%" aria-valuenow="55" aria-valuemin="0" aria-valuemax="100"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="traffic-legend mt-2">
+                        <div class="legend-item">
+                            <div class="legend-color legend-low"></div>
+                            <small>Low Congestion</small>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color legend-high"></div>
+                            <small>High Congestion</small>
+                        </div>
+                    </div>
+                    
+                    <button type="button" class="btn btn-sm btn-outline-primary india-focus-button" id="india-focus-btn">
+                        <i class="fas fa-globe-asia me-1"></i> Focus on All India
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -187,10 +258,17 @@
 <script src="{{ url_for('static', filename='js/map.js') }}"></script>
 <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
 <script>
+    // Global variables
+    let isTrafficPanelVisible = false;
+    let isTrafficLayerVisible = true;
+    
     // Initialize the map when the page loads
     document.addEventListener('DOMContentLoaded', function() {
-        // Initialize the map
+        // Initialize the map focused on India
         initMap();
+        
+        // Add India search box
+        addIndiaSearchBox();
         
         // Load dashboard data
         loadDashboardData();
@@ -204,13 +282,74 @@
         // Setup refresh button
         document.getElementById('refresh-map').addEventListener('click', function() {
             loadBusLocations();
+            loadRoutes(); // Refresh routes with traffic data
         });
         
         // Setup center map button
         document.getElementById('center-map').addEventListener('click', function() {
             centerMap();
         });
+        
+        // Setup traffic toggle button
+        document.getElementById('traffic-toggle-btn').addEventListener('click', function() {
+            toggleTrafficPanel();
+        });
+        
+        // Setup India focus button
+        document.getElementById('india-focus-btn').addEventListener('click', function() {
+            focusOnIndia();
+        });
+        
+        // Initialize traffic analysis for routes
+        initTrafficAnalysis();
     });
+    
+    // Toggle traffic analysis panel
+    function toggleTrafficPanel() {
+        const trafficPanel = document.getElementById('traffic-analysis-panel');
+        isTrafficPanelVisible = !isTrafficPanelVisible;
+        
+        if (isTrafficPanelVisible) {
+            trafficPanel.style.display = 'block';
+            
+            // Toggle traffic layer on map
+            if (trafficLayer) {
+                trafficLayer.setMap(map);
+                isTrafficLayerVisible = true;
+            }
+        } else {
+            trafficPanel.style.display = 'none';
+            
+            // Hide traffic layer
+            if (trafficLayer) {
+                trafficLayer.setMap(null);
+                isTrafficLayerVisible = false;
+            }
+        }
+    }
+    
+    // Initialize traffic analysis for all routes
+    function initTrafficAnalysis() {
+        // Get all routes
+        fetch('/api/routes')
+            .then(response => response.json())
+            .then(routes => {
+                // For each route, get traffic data and visualize
+                routes.forEach(route => {
+                    analyzeTrafficForRoute(route.id);
+                });
+            })
+            .catch(error => {
+                console.error('Error initializing traffic analysis:', error);
+            });
+    }
+    
+    // Focus map on India
+    function focusOnIndia() {
+        // Set center and zoom level for India
+        map.setCenter({lat: 20.5937, lng: 78.9629});
+        map.setZoom(5);
+    }
     
     function initPerformanceChart() {
         const ctx = document.getElementById('performance-chart').getContext('2d');
