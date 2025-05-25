@@ -18,6 +18,12 @@ let incidentRefreshInterval = null;
 function initTrafficIncidents() {
     console.log('Initializing traffic incidents module');
     
+    // Check if map and Google Maps API are loaded
+    if (typeof google === 'undefined' || typeof map === 'undefined' || !map) {
+        console.warn('Google Maps API or map not ready, skipping traffic incidents initialization');
+        return;
+    }
+    
     // Add UI controls for traffic incidents
     addTrafficIncidentsControl();
     
@@ -79,10 +85,20 @@ function addTrafficIncidentsControl() {
     // Add the control to the map
     map.controls[google.maps.ControlPosition.RIGHT_TOP].push(trafficControlsDiv);
     
-    // Add event listeners
-    document.getElementById('incidents-toggle').addEventListener('change', toggleIncidents);
-    document.getElementById('heatmap-toggle').addEventListener('change', toggleTrafficHeatmap);
-    document.getElementById('traffic-toggle').addEventListener('change', toggleTrafficLayer);
+    // Add event listeners with null checks
+    const incidentsToggle = document.getElementById('incidents-toggle');
+    const heatmapToggle = document.getElementById('heatmap-toggle');
+    const trafficToggle = document.getElementById('traffic-toggle');
+    
+    if (incidentsToggle) {
+        incidentsToggle.addEventListener('change', toggleIncidents);
+    }
+    if (heatmapToggle) {
+        heatmapToggle.addEventListener('change', toggleTrafficHeatmap);
+    }
+    if (trafficToggle) {
+        trafficToggle.addEventListener('change', toggleTrafficLayer);
+    }
 }
 
 /**
