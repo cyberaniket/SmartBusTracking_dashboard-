@@ -34,14 +34,26 @@ function initMap() {
     // Create info window for markers
     infoWindow = new google.maps.InfoWindow();
     
-    // Create traffic layer for all roads (not just highways) and add to map
+    // Create comprehensive traffic layer with all available traffic data types
     trafficLayer = new google.maps.TrafficLayer({
-        autoRefresh: true,
-        options: {
-            allRoads: true  // Include traffic data for all roads, not just highways
-        }
+        autoRefresh: true
     });
+    
+    // Set advanced options for the traffic layer to show all types of traffic data
+    const trafficOptions = {
+        allRoads: true,         // Include traffic data for all roads, not just highways
+        incidents: true,        // Show traffic incidents like accidents and construction
+        liveTraffic: true,      // Show real-time traffic conditions
+        transitLayer: true      // Include public transit information
+    };
+    
+    // Apply traffic options and add to map
+    trafficLayer.setOptions(trafficOptions);
     trafficLayer.setMap(map);
+    
+    // Add transit layer for public transportation
+    const transitLayer = new google.maps.TransitLayer();
+    transitLayer.setMap(map);
     
     // Add traffic toggle control
     addTrafficToggleControl(map);
@@ -51,7 +63,10 @@ function initMap() {
     loadStops();
     loadRoutes();
     
-    console.log('Google Maps initialized for India with traffic data');
+    // Initialize traffic incidents module
+    initTrafficIncidents();
+    
+    console.log('Google Maps initialized for India with enhanced traffic data');
 }
 
 // Add custom control for toggling traffic layer
