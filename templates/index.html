@@ -15,13 +15,60 @@
     .stats-card:hover {
         transform: translateY(-5px);
     }
-    .bus-marker {
-        font-size: 20px;
-        color: #0d6efd;
+    
+    /* Map Controls */
+    .map-control-panel {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        z-index: 100;
+        background: rgba(255, 255, 255, 0.8);
+        padding: 10px;
+        border-radius: 4px;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
     }
-    .stop-marker {
-        font-size: 16px;
-        color: #dc3545;
+    
+    /* Traffic Analysis Panel */
+    .traffic-analysis-panel {
+        margin-top: 15px;
+        padding: 10px;
+        background: rgba(255, 255, 255, 0.8);
+        border-radius: 4px;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    }
+    
+    /* Legend */
+    .traffic-legend {
+        margin-top: 10px;
+        display: flex;
+        align-items: center;
+    }
+    
+    .legend-item {
+        display: flex;
+        align-items: center;
+        margin-right: 15px;
+    }
+    
+    .legend-color {
+        width: 15px;
+        height: 15px;
+        margin-right: 5px;
+        border-radius: 2px;
+    }
+    
+    .legend-low {
+        background: linear-gradient(to right, rgba(0, 255, 0, 1), rgba(255, 255, 0, 1));
+    }
+    
+    .legend-high {
+        background: linear-gradient(to right, rgba(255, 255, 0, 1), rgba(255, 0, 0, 1));
+    }
+    
+    /* India focus */
+    .india-focus-button {
+        margin-top: 10px;
+        width: 100%;
     }
 </style>
 {% endblock %}

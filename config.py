@@ -36,6 +36,14 @@ class Config:
     FIREBASE_CREDENTIALS = os.environ.get("FIREBASE_CREDENTIALS", "")
     FCM_API_KEY = os.environ.get("FCM_API_KEY", "")
 
+    # Google Maps API configuration
+    GOOGLE_MAPS_API_KEY = os.environ.get("GOOGLE_MAPS_API_KEY", "")
+    
+    # Map settings
+    DEFAULT_MAP_CENTER_LAT = float(os.environ.get("DEFAULT_MAP_CENTER_LAT", "20.5937"))  # Default India center
+    DEFAULT_MAP_CENTER_LON = float(os.environ.get("DEFAULT_MAP_CENTER_LON", "78.9629"))  # Default India center
+    DEFAULT_MAP_ZOOM = int(os.environ.get("DEFAULT_MAP_ZOOM", 5))  # Default zoom level for India
+    
     # Application settings
     BUS_UPDATE_INTERVAL = int(os.environ.get("BUS_UPDATE_INTERVAL", 5))  # seconds
     NOTIFICATION_DISTANCE = float(os.environ.get("NOTIFICATION_DISTANCE", 0.5))  # km

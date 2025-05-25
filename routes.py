@@ -197,6 +197,108 @@ def register_routes(app):
         except Exception as e:
             logger.exception(f"Error retrieving routes: {e}")
             return jsonify({'error': 'Failed to retrieve routes'}), 500
+            
+    @app.route('/api/routes/<route_id>/traffic', methods=['GET'])
+    def api_route_traffic(route_id):
+        """Get traffic analysis data for a specific route"""
+        try:
+            # Validate the route exists
+            route = db.session.query(Route).get(route_id)
+            
+            if not route:
+                return jsonify({'error': 'Route not found'}), 404
+                
+            # In a real implementation, this would call an external traffic API
+            # or use historical data to predict current traffic conditions
+            # For this example, we'll generate simulated traffic data
+                
+            # Get the route stops
+            scheduled_stops = db.session.query(ScheduledStop).filter_by(
+                route_id=route_id
+            ).order_by(ScheduledStop.stop_sequence).all()
+            
+            if not scheduled_stops or len(scheduled_stops) < 2:
+                return jsonify({'error': 'Route has insufficient stops for traffic analysis'}), 400
+                
+            # Create congestion points along the route
+            congestion_points = []
+            
+            # Get the stops for interpolation
+            stops = []
+            for ss in scheduled_stops:
+                stop = db.session.query(Stop).get(ss.stop_id)
+                if stop:
+                    stops.append({
+                        'latitude': stop.latitude,
+                        'longitude': stop.longitude,
+                        'sequence': ss.stop_sequence
+                    })
+            
+            # Generate congestion points between stops
+            for i in range(len(stops) - 1):
+                start_stop = stops[i]
+                end_stop = stops[i + 1]
+                
+                # Create several points between stops with random congestion levels
+                points_between = 5  # Number of points to generate between stops
+                
+                for j in range(points_between):
+                    # Interpolate position
+                    ratio = (j + 1) / (points_between + 1)
+                    lat = start_stop['latitude'] + ratio * (end_stop['latitude'] - start_stop['latitude'])
+                    lng = start_stop['longitude'] + ratio * (end_stop['longitude'] - start_stop['longitude'])
+                    
+                    # Generate random congestion level (higher near cities)
+                    # This is where real traffic data would be used
+                    import random
+                    
+                    # Cities in India with typically higher traffic
+                    major_cities = [
+                        {'name': 'Delhi', 'lat': 28.7041, 'lng': 77.1025},
+                        {'name': 'Mumbai', 'lat': 19.0760, 'lng': 72.8777},
+                        {'name': 'Bangalore', 'lat': 12.9716, 'lng': 77.5946},
+                        {'name': 'Chennai', 'lat': 13.0827, 'lng': 80.2707},
+                        {'name': 'Kolkata', 'lat': 22.5726, 'lng': 88.3639},
+                        {'name': 'Hyderabad', 'lat': 17.3850, 'lng': 78.4867},
+                        {'name': 'Ahmedabad', 'lat': 23.0225, 'lng': 72.5714},
+                        {'name': 'Pune', 'lat': 18.5204, 'lng': 73.8567}
+                    ]
+                    
+                    # Check proximity to major cities to increase congestion probability
+                    congestion_level = random.randint(1, 4)  # Base congestion level
+                    
+                    for city in major_cities:
+                        city_proximity = (lat - city['lat'])**2 + (lng - city['lng'])**2
+                        if city_proximity < 0.01:  # Closer to a major city
+                            congestion_level = random.randint(5, 10)  # Higher congestion near cities
+                            break
+                    
+                    # Add time-based variation (rush hours)
+                    from datetime import datetime
+                    current_hour = datetime.now().hour
+                    
+                    # Rush hours typically 8-10 AM and 5-7 PM
+                    if (8 <= current_hour <= 10) or (17 <= current_hour <= 19):
+                        congestion_level = min(congestion_level + random.randint(2, 4), 10)
+                    
+                    congestion_points.append({
+                        'latitude': lat,
+                        'longitude': lng,
+                        'congestion_level': congestion_level,
+                        'segment': i
+                    })
+            
+            # Return the traffic analysis
+            return jsonify({
+                'route_id': int(route_id),
+                'route_name': route.name,
+                'congestion_points': congestion_points,
+                'analysis_timestamp': datetime.utcnow().isoformat()
+            })
+            
+        except Exception as e:
+            logger.exception(f"Error retrieving traffic data for route {route_id}: {e}")
+            return jsonify({'error': 'Failed to retrieve traffic data'}), 500
     
     @app.route('/api/stops', methods=['GET'])
     def api_stops():

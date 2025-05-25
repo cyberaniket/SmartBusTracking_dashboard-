@@ -43,24 +43,120 @@ footer {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.bus-icon-container, .stop-icon-container {
-    background: transparent;
-    border: none;
+/* Google Maps Controls */
+.custom-map-control {
+    background-color: #fff;
+    border: 1px solid #ccc;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, .3);
+    border-radius: 4px;
+    margin: 10px;
+    overflow: hidden;
+}
+
+.custom-map-control-ui {
+    color: rgb(25, 25, 25);
+    background-color: rgb(255, 255, 255);
+    padding: 8px 12px;
+    cursor: pointer;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    font-size: 14px;
+    user-select: none;
+}
+
+.custom-control-container {
     display: flex;
     align-items: center;
-    justify-content: center;
 }
 
-.bus-marker {
-    color: #0d6efd;
-    font-size: 20px;
-    text-shadow: 0 0 3px rgba(0, 0, 0, 0.5);
+/* Toggle Switch */
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 40px;
+    height: 20px;
+    margin-bottom: 0;
 }
 
-.stop-marker {
-    color: #dc3545;
-    font-size: 18px;
-    text-shadow: 0 0 3px rgba(0, 0, 0, 0.5);
+.switch input { 
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 16px;
+    width: 16px;
+    left: 2px;
+    bottom: 2px;
+    background-color: white;
+    transition: .4s;
+}
+
+input:checked + .slider {
+    background-color: #0d6efd;
+}
+
+input:focus + .slider {
+    box-shadow: 0 0 1px #0d6efd;
+}
+
+input:checked + .slider:before {
+    transform: translateX(20px);
+}
+
+.slider.round {
+    border-radius: 20px;
+}
+
+.slider.round:before {
+    border-radius: 50%;
+}
+
+/* Search Box */
+#pac-input {
+    background-color: #fff;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    font-size: 15px;
+    font-weight: 300;
+    margin-top: 10px;
+    padding: 8px 12px;
+    text-overflow: ellipsis;
+    width: 300px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, .3);
+}
+
+#pac-input:focus {
+    border-color: #0d6efd;
+}
+
+/* Info Windows */
+.bus-info-window,
+.stop-info-window,
+.route-info-window,
+.place-info-window {
+    padding: 5px 0;
+}
+
+.stop-label {
+    padding: 2px 5px;
+    font-weight: bold;
+    background-color: rgba(255, 255, 255, 0.8);
+    border-radius: 3px;
 }
 
 /* Table Styles */
