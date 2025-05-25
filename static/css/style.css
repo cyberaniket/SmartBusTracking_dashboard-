@@ -154,8 +154,27 @@ input:checked + .slider:before {
 .bus-info-window,
 .stop-info-window,
 .route-info-window,
-.place-info-window {
+.place-info-window,
+.incident-info-window {
     padding: 5px 0;
+    color: #333 !important;
+    background-color: #fff;
+}
+
+.incident-info-window h5 {
+    color: #333 !important;
+    margin-bottom: 10px;
+    font-weight: 600;
+}
+
+.incident-info-window p {
+    color: #555 !important;
+    margin-bottom: 5px;
+}
+
+.incident-info-window strong {
+    color: #333 !important;
+    font-weight: 600;
 }
 
 .stop-label {
