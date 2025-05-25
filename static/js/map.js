@@ -34,8 +34,13 @@ function initMap() {
     // Create info window for markers
     infoWindow = new google.maps.InfoWindow();
     
-    // Create traffic layer and add to map
-    trafficLayer = new google.maps.TrafficLayer();
+    // Create traffic layer for all roads (not just highways) and add to map
+    trafficLayer = new google.maps.TrafficLayer({
+        autoRefresh: true,
+        options: {
+            allRoads: true  // Include traffic data for all roads, not just highways
+        }
+    });
     trafficLayer.setMap(map);
     
     // Add traffic toggle control
@@ -535,12 +540,69 @@ function addIndiaSearchBox() {
     // Create search box input
     const input = document.createElement('input');
     input.id = 'pac-input';
-    input.className = 'controls';
+    input.className = 'controls form-control form-control-sm';
     input.type = 'text';
     input.placeholder = 'Search locations in India';
+    input.style.width = '300px';
+    input.style.margin = '10px';
     
     const searchBox = new google.maps.places.SearchBox(input);
     map.controls[google.maps.ControlPosition.TOP_CENTER].push(input);
+    
+    // Add quick-access buttons for major Indian cities including Aurangabad
+    const cityButtonsDiv = document.createElement('div');
+    cityButtonsDiv.className = 'map-city-buttons card p-2';
+    cityButtonsDiv.style.margin = '10px';
+    
+    // Add title
+    const titleDiv = document.createElement('div');
+    titleDiv.className = 'mb-2 text-center';
+    titleDiv.innerHTML = '<small><strong>Major Cities</strong></small>';
+    cityButtonsDiv.appendChild(titleDiv);
+    
+    // Create button container
+    const buttonContainer = document.createElement('div');
+    buttonContainer.className = 'd-flex flex-wrap justify-content-center';
+    
+    // List of major cities with Aurangabad highlighted
+    const majorCities = [
+        { name: 'Delhi', lat: 28.7041, lng: 77.1025 },
+        { name: 'Mumbai', lat: 19.0760, lng: 72.8777 },
+        { name: 'Aurangabad', lat: 19.8762, lng: 75.3433 },
+        { name: 'Bangalore', lat: 12.9716, lng: 77.5946 },
+        { name: 'Chennai', lat: 13.0827, lng: 80.2707 }
+    ];
+    
+    majorCities.forEach(city => {
+        const btn = document.createElement('button');
+        btn.className = city.name === 'Aurangabad' ? 
+            'btn btn-sm btn-primary m-1' : 
+            'btn btn-sm btn-outline-secondary m-1';
+        btn.textContent = city.name;
+        btn.onclick = function() {
+            map.setCenter({ lat: city.lat, lng: city.lng });
+            map.setZoom(12); // Closer zoom for city view
+            
+            // Show traffic in this area
+            if (trafficLayer) {
+                trafficLayer.setMap(map);
+            }
+            
+            // Create marker for the city
+            new google.maps.Marker({
+                position: { lat: city.lat, lng: city.lng },
+                map: map,
+                title: city.name,
+                animation: google.maps.Animation.DROP
+            });
+        };
+        buttonContainer.appendChild(btn);
+    });
+    
+    cityButtonsDiv.appendChild(buttonContainer);
+    
+    // Add city buttons to the map
+    map.controls[google.maps.ControlPosition.BOTTOM_CENTER].push(cityButtonsDiv);
     
     // Bias the SearchBox results towards current map's viewport
     map.addListener('bounds_changed', () => {

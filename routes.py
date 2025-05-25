@@ -262,7 +262,8 @@ def register_routes(app):
                         {'name': 'Kolkata', 'lat': 22.5726, 'lng': 88.3639},
                         {'name': 'Hyderabad', 'lat': 17.3850, 'lng': 78.4867},
                         {'name': 'Ahmedabad', 'lat': 23.0225, 'lng': 72.5714},
-                        {'name': 'Pune', 'lat': 18.5204, 'lng': 73.8567}
+                        {'name': 'Pune', 'lat': 18.5204, 'lng': 73.8567},
+                        {'name': 'Aurangabad', 'lat': 19.8762, 'lng': 75.3433}
                     ]
                     
                     # Check proximity to major cities to increase congestion probability
