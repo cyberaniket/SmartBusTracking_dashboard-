@@ -86,19 +86,21 @@ function addTrafficIncidentsControl() {
     map.controls[google.maps.ControlPosition.RIGHT_TOP].push(trafficControlsDiv);
     
     // Add event listeners with null checks
-    const incidentsToggle = document.getElementById('incidents-toggle');
-    const heatmapToggle = document.getElementById('heatmap-toggle');
-    const trafficToggle = document.getElementById('traffic-toggle');
-    
-    if (incidentsToggle) {
-        incidentsToggle.addEventListener('change', toggleIncidents);
-    }
-    if (heatmapToggle) {
-        heatmapToggle.addEventListener('change', toggleTrafficHeatmap);
-    }
-    if (trafficToggle) {
-        trafficToggle.addEventListener('change', toggleTrafficLayer);
-    }
+    setTimeout(() => {
+        const incidentsToggle = document.getElementById('incidents-toggle');
+        const heatmapToggle = document.getElementById('heatmap-toggle');
+        const trafficToggle = document.getElementById('traffic-toggle');
+        
+        if (incidentsToggle) {
+            incidentsToggle.addEventListener('change', toggleIncidents);
+        }
+        if (heatmapToggle) {
+            heatmapToggle.addEventListener('change', toggleTrafficHeatmap);
+        }
+        if (trafficToggle) {
+            trafficToggle.addEventListener('change', toggleTrafficLayer);
+        }
+    }, 100);
 }
 
 /**
