@@ -11,6 +11,9 @@ logger = logging.getLogger(__name__)
 
 def register_routes(app):
     """Register all routes with the Flask application"""
+    # Import and register mobile API routes
+    from mobile_api import register_mobile_api
+    register_mobile_api(app)
     
     @app.route('/')
     def index():
