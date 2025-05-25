@@ -19,6 +19,11 @@ def register_routes(app):
     def index():
         """Render the dashboard page"""
         return render_template('index.html')
+        
+    @app.route('/api-docs')
+    def api_docs():
+        """Render the API documentation page"""
+        return render_template('api_docs.html')
     
     @app.route('/buses')
     def buses():

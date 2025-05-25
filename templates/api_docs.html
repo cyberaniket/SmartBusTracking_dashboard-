@@ -1,0 +1,641 @@
+{% extends "base.html" %}
+
+{% block title %}API Documentation - Smart Bus Tracking System{% endblock %}
+
+{% block head %}
+<style>
+    .api-endpoint {
+        border-left: 4px solid #0d6efd;
+        padding-left: 15px;
+        margin-bottom: 20px;
+    }
+    
+    .method {
+        display: inline-block;
+        padding: 3px 6px;
+        border-radius: 3px;
+        font-family: monospace;
+        font-weight: bold;
+        margin-right: 10px;
+    }
+    
+    .method-get {
+        background-color: #28a745;
+        color: white;
+    }
+    
+    .method-post {
+        background-color: #0d6efd;
+        color: white;
+    }
+    
+    .method-delete {
+        background-color: #dc3545;
+        color: white;
+    }
+    
+    .endpoint-url {
+        font-family: monospace;
+        font-weight: bold;
+    }
+    
+    .parameter {
+        background-color: #f8f9fa;
+        padding: 2px 4px;
+        border-radius: 3px;
+        font-family: monospace;
+    }
+    
+    .endpoint-description {
+        margin: 10px 0;
+    }
+    
+    pre {
+        background-color: #212529;
+        color: #f8f9fa;
+        padding: 15px;
+        border-radius: 5px;
+        overflow-x: auto;
+    }
+    
+    .api-test-section {
+        margin-top: 20px;
+        padding: 15px;
+        background-color: #f8f9fa;
+        border-radius: 5px;
+    }
+    
+    #api-response {
+        min-height: 100px;
+        max-height: 400px;
+        overflow-y: auto;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+    <div class="row">
+        <div class="col-12">
+            <h1><i class="fas fa-code me-2"></i>API Documentation</h1>
+            <p class="lead">This page documents the available API endpoints for integrating with the Smart Bus Tracking System.</p>
+            
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i> All API endpoints return JSON responses. Authentication is required for most endpoints.
+            </div>
+            
+            <ul class="nav nav-tabs mb-4" id="apiTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="mobile-tab" data-bs-toggle="tab" data-bs-target="#mobile" type="button" role="tab" aria-controls="mobile" aria-selected="true">
+                        <i class="fas fa-mobile-alt me-2"></i>Mobile API
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="dashboard-tab" data-bs-toggle="tab" data-bs-target="#dashboard" type="button" role="tab" aria-controls="dashboard" aria-selected="false">
+                        <i class="fas fa-tachometer-alt me-2"></i>Dashboard API
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="tester-tab" data-bs-toggle="tab" data-bs-target="#tester" type="button" role="tab" aria-controls="tester" aria-selected="false">
+                        <i class="fas fa-flask me-2"></i>API Tester
+                    </button>
+                </li>
+            </ul>
+            
+            <div class="tab-content" id="apiTabsContent">
+                <!-- Mobile API Documentation -->
+                <div class="tab-pane fade show active" id="mobile" role="tabpanel" aria-labelledby="mobile-tab">
+                    <h2>Mobile API</h2>
+                    <p>The Mobile API provides endpoints specifically designed for mobile applications.</p>
+                    
+                    <h3>Authentication</h3>
+                    
+                    <!-- Register -->
+                    <div class="api-endpoint">
+                        <h4>
+                            <span class="method method-post">POST</span>
+                            <span class="endpoint-url">/api/mobile/user/register</span>
+                        </h4>
+                        <div class="endpoint-description">Register a new user account.</div>
+                        
+                        <h5>Request Body:</h5>
+                        <pre>{
+  "username": "user123",
+  "email": "user@example.com",
+  "password": "securepassword",
+  "fcm_token": "firebase-token-for-push-notifications" // Optional
+}</pre>
+                        
+                        <h5>Response:</h5>
+                        <pre>{
+  "id": 1,
+  "username": "user123",
+  "email": "user@example.com",
+  "message": "User registered successfully"
+}</pre>
+                    </div>
+                    
+                    <!-- Login -->
+                    <div class="api-endpoint">
+                        <h4>
+                            <span class="method method-post">POST</span>
+                            <span class="endpoint-url">/api/mobile/user/login</span>
+                        </h4>
+                        <div class="endpoint-description">Login an existing user.</div>
+                        
+                        <h5>Request Body:</h5>
+                        <pre>{
+  "username": "user123",
+  "password": "securepassword",
+  "fcm_token": "firebase-token-for-push-notifications" // Optional
+}</pre>
+                        
+                        <h5>Response:</h5>
+                        <pre>{
+  "id": 1,
+  "username": "user123",
+  "email": "user@example.com",
+  "message": "Login successful"
+}</pre>
+                    </div>
+                    
+                    <h3>Bus Information</h3>
+                    
+                    <!-- Get Buses -->
+                    <div class="api-endpoint">
+                        <h4>
+                            <span class="method method-get">GET</span>
+                            <span class="endpoint-url">/api/mobile/buses</span>
+                        </h4>
+                        <div class="endpoint-description">Get all active buses with current location and status.</div>
+                        
+                        <h5>Response:</h5>
+                        <pre>[
+  {
+    "id": 1,
+    "bus_number": "B001",
+    "latitude": 19.8762,
+    "longitude": 75.3433,
+    "speed": 25.5,
+    "heading": 90,
+    "last_updated": "2025-05-25T17:15:30Z",
+    "route": {
+      "id": 3,
+      "route_number": "R103",
+      "name": "City Center to East End"
+    },
+    "next_stop": {
+      "id": 7,
+      "name": "East Market",
+      "code": "EM01",
+      "latitude": 19.8800,
+      "longitude": 75.3500,
+      "eta": "2025-05-25T17:20:00Z",
+      "is_delayed": false,
+      "delay_minutes": 0
+    },
+    "capacity": 50,
+    "license_plate": "MH-20 AB 1234"
+  },
+  ...
+]</pre>
+                    </div>
+                    
+                    <!-- Get Bus Telemetry -->
+                    <div class="api-endpoint">
+                        <h4>
+                            <span class="method method-get">GET</span>
+                            <span class="endpoint-url">/api/mobile/buses/{bus_id}/telemetry?hours=1</span>
+                        </h4>
+                        <div class="endpoint-description">Get historical telemetry data for a specific bus.</div>
+                        
+                        <h5>Parameters:</h5>
+                        <ul>
+                            <li><span class="parameter">bus_id</span> - ID of the bus</li>
+                            <li><span class="parameter">hours</span> - Number of hours of history (1-24, default: 1)</li>
+                        </ul>
+                        
+                        <h5>Response:</h5>
+                        <pre>{
+  "bus_id": 1,
+  "bus_number": "B001",
+  "telemetry": [
+    {
+      "timestamp": "2025-05-25T16:15:30Z",
+      "latitude": 19.8700,
+      "longitude": 75.3400,
+      "speed": 20.5,
+      "heading": 90
+    },
+    {
+      "timestamp": "2025-05-25T16:16:00Z",
+      "latitude": 19.8710,
+      "longitude": 75.3410,
+      "speed": 22.0,
+      "heading": 90
+    },
+    ...
+  ]
+}</pre>
+                    </div>
+                    
+                    <h3>Routes and Stops</h3>
+                    
+                    <!-- Get Routes -->
+                    <div class="api-endpoint">
+                        <h4>
+                            <span class="method method-get">GET</span>
+                            <span class="endpoint-url">/api/mobile/routes</span>
+                        </h4>
+                        <div class="endpoint-description">Get all active routes with their stops.</div>
+                        
+                        <h5>Response:</h5>
+                        <pre>[
+  {
+    "id": 1,
+    "route_number": "R101",
+    "name": "Central Station to Airport",
+    "description": "Route connecting Central Station to International Airport",
+    "stops": [
+      {
+        "id": 1,
+        "stop_code": "CS01",
+        "name": "Central Station",
+        "latitude": 19.8700,
+        "longitude": 75.3400,
+        "sequence": 1,
+        "scheduled_arrival": "08:00:00",
+        "scheduled_departure": "08:05:00",
+        "distance_from_start": 0.0
+      },
+      ...
+    ],
+    "active_buses": [
+      {
+        "id": 1,
+        "bus_number": "B001",
+        "latitude": 19.8762,
+        "longitude": 75.3433
+      },
+      ...
+    ]
+  },
+  ...
+]</pre>
+                    </div>
+                    
+                    <!-- Get Stop ETAs -->
+                    <div class="api-endpoint">
+                        <h4>
+                            <span class="method method-get">GET</span>
+                            <span class="endpoint-url">/api/mobile/stops/{stop_id}/eta</span>
+                        </h4>
+                        <div class="endpoint-description">Get ETAs for all buses arriving at a specific stop.</div>
+                        
+                        <h5>Parameters:</h5>
+                        <ul>
+                            <li><span class="parameter">stop_id</span> - ID of the stop</li>
+                        </ul>
+                        
+                        <h5>Response:</h5>
+                        <pre>{
+  "stop_id": 7,
+  "stop_name": "East Market",
+  "stop_code": "EM01",
+  "latitude": 19.8800,
+  "longitude": 75.3500,
+  "arrivals": [
+    {
+      "bus_id": 1,
+      "bus_number": "B001",
+      "route_id": 3,
+      "route_number": "R103",
+      "route_name": "City Center to East End",
+      "eta": "2025-05-25T17:20:00Z",
+      "is_delayed": false,
+      "delay_minutes": 0,
+      "confidence": 0.95,
+      "current_position": {
+        "latitude": 19.8762,
+        "longitude": 75.3433
+      }
+    },
+    ...
+  ]
+}</pre>
+                    </div>
+                    
+                    <h3>User Subscriptions</h3>
+                    
+                    <!-- Get Subscriptions -->
+                    <div class="api-endpoint">
+                        <h4>
+                            <span class="method method-get">GET</span>
+                            <span class="endpoint-url">/api/mobile/user/subscriptions</span>
+                        </h4>
+                        <div class="endpoint-description">Get all bus subscriptions for the current user.</div>
+                        
+                        <h5>Response:</h5>
+                        <pre>[
+  {
+    "id": 1,
+    "bus": {
+      "id": 1,
+      "bus_number": "B001"
+    },
+    "stop": {
+      "id": 7,
+      "name": "East Market",
+      "code": "EM01"
+    },
+    "notify_on_approach": true,
+    "notify_on_delay": true,
+    "approach_distance_km": 0.5
+  },
+  ...
+]</pre>
+                    </div>
+                    
+                    <!-- Subscribe to Bus -->
+                    <div class="api-endpoint">
+                        <h4>
+                            <span class="method method-post">POST</span>
+                            <span class="endpoint-url">/api/mobile/user/subscribe</span>
+                        </h4>
+                        <div class="endpoint-description">Subscribe to receive notifications for a bus at a stop.</div>
+                        
+                        <h5>Request Body:</h5>
+                        <pre>{
+  "bus_id": 1,
+  "stop_id": 7,
+  "notify_on_approach": true,
+  "notify_on_delay": true,
+  "approach_distance_km": 0.5
+}</pre>
+                        
+                        <h5>Response:</h5>
+                        <pre>{
+  "id": 1,
+  "message": "Subscription created successfully"
+}</pre>
+                    </div>
+                    
+                    <!-- Unsubscribe from Bus -->
+                    <div class="api-endpoint">
+                        <h4>
+                            <span class="method method-delete">DELETE</span>
+                            <span class="endpoint-url">/api/mobile/user/unsubscribe/{subscription_id}</span>
+                        </h4>
+                        <div class="endpoint-description">Unsubscribe from bus notifications.</div>
+                        
+                        <h5>Parameters:</h5>
+                        <ul>
+                            <li><span class="parameter">subscription_id</span> - ID of the subscription</li>
+                        </ul>
+                        
+                        <h5>Response:</h5>
+                        <pre>{
+  "message": "Subscription deleted successfully"
+}</pre>
+                    </div>
+                    
+                    <!-- Update FCM Token -->
+                    <div class="api-endpoint">
+                        <h4>
+                            <span class="method method-post">POST</span>
+                            <span class="endpoint-url">/api/mobile/user/update-token</span>
+                        </h4>
+                        <div class="endpoint-description">Update FCM token for push notifications.</div>
+                        
+                        <h5>Request Body:</h5>
+                        <pre>{
+  "fcm_token": "new-firebase-token-for-push-notifications"
+}</pre>
+                        
+                        <h5>Response:</h5>
+                        <pre>{
+  "message": "FCM token updated successfully"
+}</pre>
+                    </div>
+                </div>
+                
+                <!-- Dashboard API Documentation -->
+                <div class="tab-pane fade" id="dashboard" role="tabpanel" aria-labelledby="dashboard-tab">
+                    <h2>Dashboard API</h2>
+                    <p>The Dashboard API provides endpoints used by the web dashboard.</p>
+                    
+                    <h3>Bus Information</h3>
+                    
+                    <!-- Get Buses -->
+                    <div class="api-endpoint">
+                        <h4>
+                            <span class="method method-get">GET</span>
+                            <span class="endpoint-url">/api/buses</span>
+                        </h4>
+                        <div class="endpoint-description">Get all active buses with current location and status.</div>
+                    </div>
+                    
+                    <!-- Get Bus Status -->
+                    <div class="api-endpoint">
+                        <h4>
+                            <span class="method method-get">GET</span>
+                            <span class="endpoint-url">/api/buses/{bus_id}/status</span>
+                        </h4>
+                        <div class="endpoint-description">Get status for a specific bus.</div>
+                    </div>
+                    
+                    <h3>Routes and Traffic</h3>
+                    
+                    <!-- Get Routes -->
+                    <div class="api-endpoint">
+                        <h4>
+                            <span class="method method-get">GET</span>
+                            <span class="endpoint-url">/api/routes</span>
+                        </h4>
+                        <div class="endpoint-description">Get all active routes.</div>
+                    </div>
+                    
+                    <!-- Get Route Traffic -->
+                    <div class="api-endpoint">
+                        <h4>
+                            <span class="method method-get">GET</span>
+                            <span class="endpoint-url">/api/routes/{route_id}/traffic</span>
+                        </h4>
+                        <div class="endpoint-description">Get traffic analysis data for a specific route.</div>
+                    </div>
+                    
+                    <h3>Stops and ETAs</h3>
+                    
+                    <!-- Get Stops -->
+                    <div class="api-endpoint">
+                        <h4>
+                            <span class="method method-get">GET</span>
+                            <span class="endpoint-url">/api/stops</span>
+                        </h4>
+                        <div class="endpoint-description">Get all active stops.</div>
+                    </div>
+                    
+                    <!-- Get ETA -->
+                    <div class="api-endpoint">
+                        <h4>
+                            <span class="method method-get">GET</span>
+                            <span class="endpoint-url">/api/eta?bus_id={bus_id}&stop_id={stop_id}</span>
+                        </h4>
+                        <div class="endpoint-description">Get ETA for a specific bus and stop.</div>
+                    </div>
+                </div>
+                
+                <!-- API Tester -->
+                <div class="tab-pane fade" id="tester" role="tabpanel" aria-labelledby="tester-tab">
+                    <h2>API Tester</h2>
+                    <p>Test API endpoints directly from this page.</p>
+                    
+                    <div class="api-test-section">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-group mb-3">
+                                    <label for="api-method">Method</label>
+                                    <select class="form-select" id="api-method">
+                                        <option value="GET">GET</option>
+                                        <option value="POST">POST</option>
+                                        <option value="DELETE">DELETE</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-8">
+                                <div class="form-group mb-3">
+                                    <label for="api-url">URL</label>
+                                    <input type="text" class="form-control" id="api-url" placeholder="/api/mobile/buses">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group mb-3">
+                            <label for="api-body">Request Body (JSON)</label>
+                            <textarea class="form-control" id="api-body" rows="5" placeholder='{"username": "user123", "password": "securepassword"}'></textarea>
+                        </div>
+                        
+                        <div class="d-grid mb-3">
+                            <button class="btn btn-primary" id="send-request">
+                                <i class="fas fa-paper-plane me-2"></i>Send Request
+                            </button>
+                        </div>
+                        
+                        <h4>Response</h4>
+                        <pre id="api-response" class="bg-dark text-light p-3 rounded">// Response will appear here</pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const sendButton = document.getElementById('send-request');
+        const methodSelect = document.getElementById('api-method');
+        const urlInput = document.getElementById('api-url');
+        const bodyTextArea = document.getElementById('api-body');
+        const responseElement = document.getElementById('api-response');
+        
+        sendButton.addEventListener('click', async function() {
+            // Disable button during request
+            sendButton.disabled = true;
+            sendButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Sending...';
+            
+            // Get request details
+            const method = methodSelect.value;
+            const url = urlInput.value;
+            
+            // Prepare request options
+            const options = {
+                method: method,
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            };
+            
+            // Add body for POST and PUT requests
+            if (method === 'POST' || method === 'PUT') {
+                try {
+                    options.body = bodyTextArea.value;
+                } catch (e) {
+                    responseElement.textContent = 'Error: Invalid JSON in request body';
+                    sendButton.disabled = false;
+                    sendButton.innerHTML = '<i class="fas fa-paper-plane me-2"></i>Send Request';
+                    return;
+                }
+            }
+            
+            try {
+                // Send request
+                const response = await fetch(url, options);
+                
+                // Get response data
+                const contentType = response.headers.get('content-type');
+                let responseData;
+                
+                if (contentType && contentType.includes('application/json')) {
+                    responseData = await response.json();
+                    responseElement.textContent = JSON.stringify(responseData, null, 2);
+                } else {
+                    responseData = await response.text();
+                    responseElement.textContent = responseData;
+                }
+            } catch (error) {
+                responseElement.textContent = `Error: ${error.message}`;
+            } finally {
+                // Re-enable button
+                sendButton.disabled = false;
+                sendButton.innerHTML = '<i class="fas fa-paper-plane me-2"></i>Send Request';
+            }
+        });
+        
+        // Populate example requests from API documentation
+        const populateExample = (method, url, body = null) => {
+            methodSelect.value = method;
+            urlInput.value = url;
+            bodyTextArea.value = body || '';
+            
+            // Show/hide body textarea based on method
+            if (method === 'GET' || method === 'DELETE') {
+                bodyTextArea.parentElement.style.display = 'none';
+            } else {
+                bodyTextArea.parentElement.style.display = 'block';
+            }
+        };
+        
+        // Add click handlers to API endpoints for quick testing
+        document.querySelectorAll('.api-endpoint h4').forEach(el => {
+            el.style.cursor = 'pointer';
+            el.title = 'Click to test this endpoint';
+            
+            el.addEventListener('click', function() {
+                // Extract method and URL
+                const methodSpan = this.querySelector('.method');
+                const urlSpan = this.querySelector('.endpoint-url');
+                
+                if (methodSpan && urlSpan) {
+                    const method = methodSpan.textContent;
+                    const url = urlSpan.textContent;
+                    
+                    // Find example body if exists
+                    let body = null;
+                    const preElement = this.parentElement.querySelector('pre');
+                    if (preElement && (method === 'POST' || method === 'PUT')) {
+                        body = preElement.textContent;
+                    }
+                    
+                    // Switch to tester tab
+                    document.getElementById('tester-tab').click();
+                    
+                    // Populate form
+                    populateExample(method, url, body);
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}
