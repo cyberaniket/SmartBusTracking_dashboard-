@@ -560,6 +560,9 @@ function addIndiaSearchBox() {
     input.placeholder = 'Search locations in India';
     input.style.width = '300px';
     input.style.margin = '10px';
+    input.style.backgroundColor = '#fff';
+    input.style.color = '#333';
+    input.style.border = '1px solid #ccc';
     
     const searchBox = new google.maps.places.SearchBox(input);
     map.controls[google.maps.ControlPosition.TOP_CENTER].push(input);
