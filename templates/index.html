@@ -1,0 +1,226 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Smart Bus Tracking System{% endblock %}
+
+{% block head %}
+<style>
+    #map {
+        height: 500px;
+        width: 100%;
+        border-radius: 8px;
+    }
+    .stats-card {
+        transition: transform 0.3s;
+    }
+    .stats-card:hover {
+        transform: translateY(-5px);
+    }
+    .bus-marker {
+        font-size: 20px;
+        color: #0d6efd;
+    }
+    .stop-marker {
+        font-size: 16px;
+        color: #dc3545;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h1 class="h3"><i class="fas fa-tachometer-alt me-2"></i>System Dashboard</h1>
+            <div>
+                <span class="badge bg-success me-2">
+                    <i class="fas fa-satellite-dish me-1"></i> MQTT: Connected
+                </span>
+                <span class="badge bg-info">
+                    <i class="fas fa-database me-1"></i> Database: Online
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Stats Cards -->
+<div class="row mb-4">
+    <div class="col-md-3 mb-3">
+        <div class="card bg-primary text-white stats-card h-100">
+            <div class="card-body">
+                <h5 class="card-title"><i class="fas fa-bus me-2"></i>Active Buses</h5>
+                <h2 class="display-4 mb-0" id="active-buses-count">--</h2>
+                <p class="card-text mt-2">Buses currently in service</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card bg-success text-white stats-card h-100">
+            <div class="card-body">
+                <h5 class="card-title"><i class="fas fa-route me-2"></i>Active Routes</h5>
+                <h2 class="display-4 mb-0" id="active-routes-count">--</h2>
+                <p class="card-text mt-2">Routes currently operating</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card bg-info text-white stats-card h-100">
+            <div class="card-body">
+                <h5 class="card-title"><i class="fas fa-map-marker-alt me-2"></i>Bus Stops</h5>
+                <h2 class="display-4 mb-0" id="stops-count">--</h2>
+                <p class="card-text mt-2">Total stops in the system</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card bg-warning text-dark stats-card h-100">
+            <div class="card-body">
+                <h5 class="card-title"><i class="fas fa-exclamation-triangle me-2"></i>Delayed Buses</h5>
+                <h2 class="display-4 mb-0" id="delayed-buses-count">--</h2>
+                <p class="card-text mt-2">Buses currently delayed</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Live Map and Recent Activity -->
+<div class="row mb-4">
+    <div class="col-lg-8 mb-3">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="fas fa-map-marked-alt me-2"></i>Live Bus Tracking</h5>
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-sm btn-outline-primary" id="refresh-map">
+                        <i class="fas fa-sync-alt me-1"></i> Refresh
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" id="center-map">
+                        <i class="fas fa-crosshairs me-1"></i> Center
+                    </button>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div id="map"></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4 mb-3">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-history me-2"></i>Recent Activity</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush" id="recent-activity">
+                    <div class="list-group-item d-flex justify-content-center align-items-center py-5">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- System Performance -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-chart-line me-2"></i>System Performance</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="performance-chart" height="100"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/map.js') }}"></script>
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+<script>
+    // Initialize the map when the page loads
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize the map
+        initMap();
+        
+        // Load dashboard data
+        loadDashboardData();
+        
+        // Setup auto-refresh
+        setInterval(loadDashboardData, 30000); // Refresh every 30 seconds
+        
+        // Initialize performance chart
+        initPerformanceChart();
+        
+        // Setup refresh button
+        document.getElementById('refresh-map').addEventListener('click', function() {
+            loadBusLocations();
+        });
+        
+        // Setup center map button
+        document.getElementById('center-map').addEventListener('click', function() {
+            centerMap();
+        });
+    });
+    
+    function initPerformanceChart() {
+        const ctx = document.getElementById('performance-chart').getContext('2d');
+        
+        // Generate some sample data for now
+        const labels = Array.from({length: 24}, (_, i) => `${i}:00`);
+        const busData = Array.from({length: 24}, () => Math.floor(Math.random() * 50) + 10);
+        const responseData = Array.from({length: 24}, () => Math.floor(Math.random() * 500) + 100);
+        
+        const chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Active Buses',
+                        data: busData,
+                        borderColor: 'rgba(13, 110, 253, 1)',
+                        backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    },
+                    {
+                        label: 'API Response Time (ms)',
+                        data: responseData,
+                        borderColor: 'rgba(220, 53, 69, 1)',
+                        backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                        tension: 0.4,
+                        fill: true,
+                        yAxisID: 'y1'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Active Buses'
+                        }
+                    },
+                    y1: {
+                        beginAtZero: true,
+                        position: 'right',
+                        title: {
+                            display: true,
+                            text: 'Response Time (ms)'
+                        },
+                        grid: {
+                            drawOnChartArea: false
+                        }
+                    }
+                }
+            }
+        });
+    }
+</script>
+{% endblock %}

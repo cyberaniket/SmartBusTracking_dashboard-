@@ -1,0 +1,649 @@
+{% extends "base.html" %}
+
+{% block title %}Stops - Smart Bus Tracking System{% endblock %}
+
+{% block head %}
+<style>
+    #stop-map {
+        height: 500px;
+        width: 100%;
+        border-radius: 8px;
+    }
+    .stop-detail-map {
+        height: 250px;
+        border-radius: 4px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h1 class="h3"><i class="fas fa-map-marker-alt me-2"></i>Stop Management</h1>
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addStopModal">
+                <i class="fas fa-plus me-1"></i> Add New Stop
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Map View -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="fas fa-map me-2"></i>Stops Map</h5>
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-sm btn-outline-primary" id="refresh-stops-map">
+                        <i class="fas fa-sync-alt me-1"></i> Refresh
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" id="center-stops-map">
+                        <i class="fas fa-crosshairs me-1"></i> Center
+                    </button>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div id="stop-map"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Stop List -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">All Stops</h5>
+                    <div class="input-group" style="width: 300px;">
+                        <span class="input-group-text">
+                            <i class="fas fa-search"></i>
+                        </span>
+                        <input type="text" class="form-control" id="stopSearch" placeholder="Search stops...">
+                    </div>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Stop Code</th>
+                                <th>Name</th>
+                                <th>Address</th>
+                                <th>Coordinates</th>
+                                <th>Status</th>
+                                <th>Routes</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="stopTableBody">
+                            {% if stops %}
+                                {% for stop in stops %}
+                                <tr data-stop-id="{{ stop.id }}">
+                                    <td>{{ stop.stop_code }}</td>
+                                    <td>{{ stop.name }}</td>
+                                    <td>{{ stop.address or 'N/A' }}</td>
+                                    <td>
+                                        <small class="text-muted">
+                                            {{ "%.4f"|format(stop.latitude) }}, {{ "%.4f"|format(stop.longitude) }}
+                                        </small>
+                                    </td>
+                                    <td>
+                                        {% if stop.is_active %}
+                                            <span class="badge bg-success">Active</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">Inactive</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if stop.route_stops|length > 0 %}
+                                            <span class="badge bg-info">{{ stop.route_stops|length }}</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">None</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <button type="button" class="btn btn-info view-stop" data-stop-id="{{ stop.id }}">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-primary edit-stop" data-stop-id="{{ stop.id }}">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-danger delete-stop" data-stop-id="{{ stop.id }}">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="7" class="text-center py-4">
+                                        <p class="mb-0 text-muted">No stops found in the system</p>
+                                        <button class="btn btn-sm btn-outline-primary mt-2" data-bs-toggle="modal" data-bs-target="#addStopModal">
+                                            <i class="fas fa-plus me-1"></i> Add Your First Stop
+                                        </button>
+                                    </td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Stop Modal -->
+<div class="modal fade" id="addStopModal" tabindex="-1" aria-labelledby="addStopModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addStopModalLabel">Add New Stop</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addStopForm">
+                    <div class="mb-3">
+                        <label for="stopCode" class="form-label">Stop Code</label>
+                        <input type="text" class="form-control" id="stopCode" required>
+                        <div class="form-text">Unique identifier for the stop</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="stopName" class="form-label">Stop Name</label>
+                        <input type="text" class="form-control" id="stopName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="stopAddress" class="form-label">Address</label>
+                        <input type="text" class="form-control" id="stopAddress">
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <label for="stopLatitude" class="form-label">Latitude</label>
+                            <input type="number" step="0.000001" class="form-control" id="stopLatitude" required>
+                        </div>
+                        <div class="col-6">
+                            <label for="stopLongitude" class="form-label">Longitude</label>
+                            <input type="number" step="0.000001" class="form-control" id="stopLongitude" required>
+                        </div>
+                    </div>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="isActive" checked>
+                        <label class="form-check-label" for="isActive">
+                            Stop is active
+                        </label>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Pick Location on Map</label>
+                        <div id="pickLocationMap" style="height: 200px;"></div>
+                        <div class="form-text mt-2">Click on the map to set the stop location</div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="saveStopBtn">Save Stop</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- View Stop Modal -->
+<div class="modal fade" id="viewStopModal" tabindex="-1" aria-labelledby="viewStopModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="viewStopModalLabel">Stop Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card mb-3">
+                            <div class="card-header">
+                                <h6 class="mb-0">Basic Information</h6>
+                            </div>
+                            <div class="card-body">
+                                <ul class="list-group list-group-flush">
+                                    <li class="list-group-item d-flex justify-content-between">
+                                        <span>Stop Code:</span>
+                                        <span id="viewStopCode" class="fw-bold"></span>
+                                    </li>
+                                    <li class="list-group-item d-flex justify-content-between">
+                                        <span>Name:</span>
+                                        <span id="viewStopName" class="fw-bold"></span>
+                                    </li>
+                                    <li class="list-group-item d-flex justify-content-between">
+                                        <span>Status:</span>
+                                        <span id="viewStopStatus"></span>
+                                    </li>
+                                    <li class="list-group-item d-flex justify-content-between">
+                                        <span>Address:</span>
+                                        <span id="viewStopAddress"></span>
+                                    </li>
+                                    <li class="list-group-item d-flex justify-content-between">
+                                        <span>Coordinates:</span>
+                                        <span id="viewStopCoordinates" class="fw-bold"></span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card mb-3">
+                            <div class="card-header">
+                                <h6 class="mb-0">Location</h6>
+                            </div>
+                            <div class="card-body">
+                                <div id="viewStopMap" class="stop-detail-map"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="mb-0">Routes Serving This Stop</h6>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="table-responsive">
+                                    <table class="table mb-0">
+                                        <thead>
+                                            <tr>
+                                                <th>Route</th>
+                                                <th>Sequence</th>
+                                                <th>Scheduled Arrival</th>
+                                                <th>Scheduled Departure</th>
+                                                <th>Distance from Start</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="viewStopRoutesTable">
+                                            <!-- Routes will be loaded dynamically -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-md-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="mb-0">Upcoming Buses</h6>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="table-responsive">
+                                    <table class="table mb-0">
+                                        <thead>
+                                            <tr>
+                                                <th>Bus</th>
+                                                <th>Route</th>
+                                                <th>ETA</th>
+                                                <th>Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="viewStopBusesTable">
+                                            <!-- Upcoming buses will be loaded dynamically -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize the stops map
+        initStopsMap();
+        
+        // Set up event listeners
+        document.getElementById('saveStopBtn').addEventListener('click', saveStop);
+        document.getElementById('refresh-stops-map').addEventListener('click', refreshStopsMap);
+        document.getElementById('center-stops-map').addEventListener('click', centerStopsMap);
+        
+        // Set up event listeners for view/edit/delete buttons
+        document.querySelectorAll('.view-stop').forEach(button => {
+            button.addEventListener('click', function() {
+                const stopId = this.getAttribute('data-stop-id');
+                viewStop(stopId);
+            });
+        });
+        
+        document.querySelectorAll('.edit-stop').forEach(button => {
+            button.addEventListener('click', function() {
+                const stopId = this.getAttribute('data-stop-id');
+                editStop(stopId);
+            });
+        });
+        
+        document.querySelectorAll('.delete-stop').forEach(button => {
+            button.addEventListener('click', function() {
+                const stopId = this.getAttribute('data-stop-id');
+                deleteStop(stopId);
+            });
+        });
+        
+        // Set up search functionality
+        document.getElementById('stopSearch').addEventListener('input', function() {
+            const searchText = this.value.toLowerCase();
+            const rows = document.querySelectorAll('#stopTableBody tr');
+            
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(searchText) ? '' : 'none';
+            });
+        });
+        
+        // Initialize map for adding stops
+        const pickLocationMap = L.map('pickLocationMap').setView([51.505, -0.09], 13);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(pickLocationMap);
+        
+        let marker;
+        
+        pickLocationMap.on('click', function(e) {
+            // Update form fields with coordinates
+            document.getElementById('stopLatitude').value = e.latlng.lat.toFixed(6);
+            document.getElementById('stopLongitude').value = e.latlng.lng.toFixed(6);
+            
+            // Update or add marker
+            if (marker) {
+                marker.setLatLng(e.latlng);
+            } else {
+                marker = L.marker(e.latlng).addTo(pickLocationMap);
+            }
+        });
+        
+        // Reinitialize map when modal is shown
+        document.getElementById('addStopModal').addEventListener('shown.bs.modal', function() {
+            pickLocationMap.invalidateSize();
+            
+            // Use current map center or user location as starting point
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    position => {
+                        pickLocationMap.setView([position.coords.latitude, position.coords.longitude], 15);
+                    },
+                    error => {
+                        console.warn('Geolocation error:', error);
+                    }
+                );
+            }
+        });
+    });
+    
+    // Initialize the stops map
+    let stopsMap;
+    let stopsMarkers = [];
+    
+    function initStopsMap() {
+        stopsMap = L.map('stop-map').setView([51.505, -0.09], 13);
+        
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(stopsMap);
+        
+        // Load stops from API
+        loadStopsOnMap();
+    }
+    
+    function loadStopsOnMap() {
+        fetch('/api/stops')
+            .then(response => response.json())
+            .then(stops => {
+                // Clear existing markers
+                stopsMarkers.forEach(marker => stopsMap.removeLayer(marker));
+                stopsMarkers = [];
+                
+                if (stops.length > 0) {
+                    const bounds = L.latLngBounds();
+                    
+                    stops.forEach(stop => {
+                        const marker = L.marker([stop.latitude, stop.longitude])
+                            .bindTooltip(`<b>${stop.stop_code}</b>: ${stop.name}`)
+                            .bindPopup(`
+                                <div>
+                                    <h6>${stop.name}</h6>
+                                    <p><strong>Code:</strong> ${stop.stop_code}</p>
+                                    <p><strong>Address:</strong> ${stop.address || 'N/A'}</p>
+                                    <button class="btn btn-sm btn-primary view-stop-btn" 
+                                        data-stop-id="${stop.id}">View Details</button>
+                                </div>
+                            `)
+                            .addTo(stopsMap);
+                            
+                        // Add click event to the View Details button in popup
+                        marker.on('popupopen', function() {
+                            const popupButton = document.querySelector('.view-stop-btn');
+                            if (popupButton) {
+                                popupButton.addEventListener('click', function() {
+                                    const stopId = this.getAttribute('data-stop-id');
+                                    viewStop(stopId);
+                                });
+                            }
+                        });
+                        
+                        stopsMarkers.push(marker);
+                        bounds.extend([stop.latitude, stop.longitude]);
+                    });
+                    
+                    // Fit map to show all stops
+                    stopsMap.fitBounds(bounds);
+                }
+            })
+            .catch(error => {
+                console.error('Error loading stops:', error);
+                alert('Failed to load stops data');
+            });
+    }
+    
+    function refreshStopsMap() {
+        loadStopsOnMap();
+    }
+    
+    function centerStopsMap() {
+        if (stopsMarkers.length > 0) {
+            const bounds = L.latLngBounds(stopsMarkers.map(marker => marker.getLatLng()));
+            stopsMap.fitBounds(bounds);
+        }
+    }
+    
+    function saveStop() {
+        // Get form values
+        const stopCode = document.getElementById('stopCode').value;
+        const stopName = document.getElementById('stopName').value;
+        const stopAddress = document.getElementById('stopAddress').value;
+        const latitude = parseFloat(document.getElementById('stopLatitude').value);
+        const longitude = parseFloat(document.getElementById('stopLongitude').value);
+        const isActive = document.getElementById('isActive').checked;
+        
+        // Validate form
+        if (!stopCode || !stopName || isNaN(latitude) || isNaN(longitude)) {
+            alert('Please fill all required fields with valid values');
+            return;
+        }
+        
+        // Build the stop data
+        const stopData = {
+            stop_code: stopCode,
+            name: stopName,
+            address: stopAddress,
+            latitude: latitude,
+            longitude: longitude,
+            is_active: isActive
+        };
+        
+        // This would be replaced with an actual API call
+        console.log('Stop data to save:', stopData);
+        
+        // Simulate API call (in a real app, this would be a fetch POST request)
+        setTimeout(() => {
+            alert('Stop added successfully (simulated)');
+            
+            // Close modal and reset form
+            const modal = bootstrap.Modal.getInstance(document.getElementById('addStopModal'));
+            modal.hide();
+            document.getElementById('addStopForm').reset();
+            
+            // Refresh the stops map
+            refreshStopsMap();
+        }, 500);
+    }
+    
+    function viewStop(stopId) {
+        // This would be replaced with an actual API call
+        fetch(`/api/stops?id=${stopId}`)
+            .then(response => response.json())
+            .then(stops => {
+                const stop = stops.find(s => s.id == stopId);
+                
+                if (stop) {
+                    // Populate the view modal with stop details
+                    document.getElementById('viewStopCode').textContent = stop.stop_code;
+                    document.getElementById('viewStopName').textContent = stop.name;
+                    document.getElementById('viewStopAddress').textContent = stop.address || 'N/A';
+                    document.getElementById('viewStopCoordinates').textContent = 
+                        `${stop.latitude.toFixed(6)}, ${stop.longitude.toFixed(6)}`;
+                    
+                    // Set status badge
+                    const statusElement = document.getElementById('viewStopStatus');
+                    if (stop.is_active) {
+                        statusElement.innerHTML = '<span class="badge bg-success">Active</span>';
+                    } else {
+                        statusElement.innerHTML = '<span class="badge bg-danger">Inactive</span>';
+                    }
+                    
+                    // Initialize the map
+                    const viewMap = L.map('viewStopMap').setView([stop.latitude, stop.longitude], 15);
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        attribution: '&copy; OpenStreetMap contributors'
+                    }).addTo(viewMap);
+                    
+                    // Add stop marker
+                    L.marker([stop.latitude, stop.longitude])
+                        .bindTooltip(stop.name)
+                        .addTo(viewMap);
+                    
+                    // Load routes for this stop
+                    fetch('/api/routes')
+                        .then(response => response.json())
+                        .then(routes => {
+                            const routesTable = document.getElementById('viewStopRoutesTable');
+                            routesTable.innerHTML = '';
+                            
+                            let foundRoutes = false;
+                            
+                            routes.forEach(route => {
+                                const stopsOnRoute = route.stops.filter(s => s.id === stop.id);
+                                
+                                stopsOnRoute.forEach(stopOnRoute => {
+                                    foundRoutes = true;
+                                    const row = document.createElement('tr');
+                                    
+                                    row.innerHTML = `
+                                        <td>
+                                            <span class="badge bg-primary">${route.route_number}</span>
+                                            ${route.name}
+                                        </td>
+                                        <td>${stopOnRoute.sequence}</td>
+                                        <td>${stopOnRoute.scheduled_arrival || 'N/A'}</td>
+                                        <td>${stopOnRoute.scheduled_departure || 'N/A'}</td>
+                                        <td>${stopOnRoute.distance_from_start ? stopOnRoute.distance_from_start + ' km' : 'N/A'}</td>
+                                    `;
+                                    
+                                    routesTable.appendChild(row);
+                                });
+                            });
+                            
+                            if (!foundRoutes) {
+                                routesTable.innerHTML = `
+                                    <tr>
+                                        <td colspan="5" class="text-center py-3">
+                                            No routes serve this stop
+                                        </td>
+                                    </tr>
+                                `;
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error loading routes for stop:', error);
+                            document.getElementById('viewStopRoutesTable').innerHTML = `
+                                <tr>
+                                    <td colspan="5" class="text-center text-danger py-3">
+                                        Error loading route data
+                                    </td>
+                                </tr>
+                            `;
+                        });
+                    
+                    // Load upcoming buses for this stop
+                    fetch('/api/buses')
+                        .then(response => response.json())
+                        .then(buses => {
+                            // In a real app, we'd fetch ETA predictions for this stop
+                            // For now, we'll just show a placeholder
+                            document.getElementById('viewStopBusesTable').innerHTML = `
+                                <tr>
+                                    <td colspan="4" class="text-center py-3">
+                                        No upcoming buses scheduled at this time
+                                    </td>
+                                </tr>
+                            `;
+                        })
+                        .catch(error => {
+                            console.error('Error loading buses for stop:', error);
+                            document.getElementById('viewStopBusesTable').innerHTML = `
+                                <tr>
+                                    <td colspan="4" class="text-center text-danger py-3">
+                                        Error loading bus data
+                                    </td>
+                                </tr>
+                            `;
+                        });
+                    
+                    // Show the modal
+                    const modal = new bootstrap.Modal(document.getElementById('viewStopModal'));
+                    modal.show();
+                    
+                    // Fix map rendering issues
+                    setTimeout(() => {
+                        viewMap.invalidateSize();
+                    }, 300);
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching stop details:', error);
+                alert('Failed to load stop details');
+            });
+    }
+    
+    function editStop(stopId) {
+        // In a real application, this would fetch the stop data and populate the edit form
+        alert(`Edit stop ${stopId} (not implemented in this demo)`);
+    }
+    
+    function deleteStop(stopId) {
+        // In a real application, this would show a confirmation dialog and then delete the stop
+        if (confirm(`Are you sure you want to delete stop with ID ${stopId}?`)) {
+            alert(`Stop ${stopId} deleted (simulated)`);
+        }
+    }
+</script>
+{% endblock %}
