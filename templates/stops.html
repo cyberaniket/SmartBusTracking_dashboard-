@@ -390,30 +390,36 @@
             });
         });
         
-        // Initialize map for adding stops
-        const pickLocationMap = L.map('pickLocationMap').setView([51.505, -0.09], 13);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; OpenStreetMap contributors'
-        }).addTo(pickLocationMap);
+        // Initialize Google Maps for adding stops
+        window.pickLocationMap = new google.maps.Map(document.getElementById('pickLocationMap'), {
+            center: { lat: 20.5937, lng: 78.9629 },
+            zoom: 13,
+            mapTypeId: google.maps.MapTypeId.ROADMAP
+        });
         
-        let marker;
+        window.pickLocationMarker = null;
         
-        pickLocationMap.on('click', function(e) {
+        window.pickLocationMap.addListener('click', function(e) {
             // Update form fields with coordinates
-            document.getElementById('stopLatitude').value = e.latlng.lat.toFixed(6);
-            document.getElementById('stopLongitude').value = e.latlng.lng.toFixed(6);
+            document.getElementById('stopLatitude').value = e.latLng.lat().toFixed(6);
+            document.getElementById('stopLongitude').value = e.latLng.lng().toFixed(6);
             
             // Update or add marker
-            if (marker) {
-                marker.setLatLng(e.latlng);
+            if (window.pickLocationMarker) {
+                window.pickLocationMarker.setPosition(e.latLng);
             } else {
-                marker = L.marker(e.latlng).addTo(pickLocationMap);
+                window.pickLocationMarker = new google.maps.Marker({
+                    position: e.latLng,
+                    map: window.pickLocationMap,
+                    title: 'Selected Location'
+                });
             }
         });
         
         // Reinitialize map when modal is shown
         document.getElementById('addStopModal').addEventListener('shown.bs.modal', function() {
-            pickLocationMap.invalidateSize();
+            // Trigger resize for Google Maps
+            google.maps.event.trigger(window.pickLocationMap, 'resize');
             
             // Use current map center or user location as starting point
             if (navigator.geolocation) {
