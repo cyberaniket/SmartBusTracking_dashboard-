@@ -4,10 +4,6 @@
 
 {% block head %}
 <style>
-    body {
-        background-color: #f8f9fa;
-    }
-    
     .analytics-header {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
@@ -17,12 +13,12 @@
     }
     
     .metric-card {
-        background: white;
+        background: var(--card-bg);
         border-radius: 15px;
         padding: 1.5rem;
         box-shadow: 0 4px 15px rgba(0,0,0,0.1);
         transition: all 0.3s ease;
-        border: none;
+        border: 1px solid var(--border-color);
         height: 100%;
     }
     
@@ -35,6 +31,7 @@
         font-size: 2.5rem;
         font-weight: bold;
         margin: 0.5rem 0;
+        color: var(--bs-body-color);
     }
     
     .metric-icon {
@@ -55,31 +52,37 @@
     }
     
     .chart-card {
-        background: white;
+        background: var(--card-bg);
         border-radius: 15px;
         padding: 1.5rem;
         box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-        border: none;
+        border: 1px solid var(--border-color);
         margin-bottom: 2rem;
     }
     
     .performance-table {
-        background: white;
+        background: var(--card-bg);
         border-radius: 15px;
         overflow: hidden;
         box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        border: 1px solid var(--border-color);
     }
     
     .table-header {
-        background: #f8f9fa;
+        background: var(--sidebar-hover);
         padding: 1.5rem;
-        border-bottom: 1px solid #dee2e6;
+        border-bottom: 1px solid var(--border-color);
+    }
+    
+    .table-header h6 {
+        color: var(--bs-body-color);
+        margin: 0;
     }
     
     .progress-custom {
         height: 8px;
         border-radius: 20px;
-        background-color: #e9ecef;
+        background-color: var(--border-color);
     }
     
     .progress-bar-custom {
@@ -93,12 +96,46 @@
     }
     
     .world-map-container {
-        background: white;
+        background: var(--card-bg);
         border-radius: 15px;
         padding: 1rem;
         box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        border: 1px solid var(--border-color);
         position: relative;
         min-height: 300px;
+    }
+    
+    .world-map-container h6 {
+        color: var(--bs-body-color);
+    }
+    
+    /* Chart card titles */
+    .chart-card h6 {
+        color: var(--bs-body-color);
+    }
+    
+    /* Table styling for both themes */
+    .table {
+        --bs-table-bg: var(--card-bg);
+        --bs-table-color: var(--bs-body-color);
+    }
+    
+    .table-hover > tbody > tr:hover > * {
+        --bs-table-bg: var(--sidebar-hover);
+    }
+    
+    /* Badge colors for both themes */
+    .badge.bg-success {
+        background-color: #198754 !important;
+    }
+    
+    .badge.bg-info {
+        background-color: #0dcaf0 !important;
+    }
+    
+    .badge.bg-warning {
+        background-color: #ffc107 !important;
+        color: #000 !important;
     }
     
     /* Map Controls */
@@ -698,8 +735,6 @@
                     }
                 }
             }
-        });
-    }
         });
     }
 </script>
