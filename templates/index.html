@@ -58,6 +58,14 @@
         box-shadow: 0 4px 15px rgba(0,0,0,0.1);
         border: 1px solid var(--border-color);
         margin-bottom: 2rem;
+        height: 220px;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .chart-card canvas {
+        flex: 1;
+        max-height: 120px !important;
     }
     
     .performance-table {
@@ -285,7 +293,7 @@
                     <h6 class="mb-0"><i class="fas fa-chart-line me-2"></i>Daily Operations</h6>
                     <span class="badge bg-success">+15% increase</span>
                 </div>
-                <canvas id="daily-operations-chart" height="200"></canvas>
+                <canvas id="daily-operations-chart" height="120"></canvas>
                 <div class="mt-3">
                     <small class="text-muted">Last updated 4 min ago</small>
                 </div>
@@ -297,7 +305,7 @@
                     <h6 class="mb-0"><i class="fas fa-chart-area me-2"></i>Route Efficiency</h6>
                     <span class="badge bg-info">Optimized</span>
                 </div>
-                <canvas id="route-efficiency-chart" height="200"></canvas>
+                <canvas id="route-efficiency-chart" height="120"></canvas>
                 <div class="mt-3">
                     <small class="text-muted">Last updated 4 min ago</small>
                 </div>
@@ -309,7 +317,7 @@
                     <h6 class="mb-0"><i class="fas fa-chart-bar me-2"></i>Performance Score</h6>
                     <span class="badge bg-warning">Good</span>
                 </div>
-                <canvas id="performance-score-chart" height="200"></canvas>
+                <canvas id="performance-score-chart" height="120"></canvas>
                 <div class="mt-3">
                     <small class="text-muted">Last updated 4 min ago</small>
                 </div>
