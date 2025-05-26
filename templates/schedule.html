@@ -1,0 +1,279 @@
+{% extends "base.html" %}
+
+{% block title %}Schedule Management - Smart Bus Tracking System{% endblock %}
+
+{% block head %}
+<style>
+    .schedule-card {
+        background: var(--card-bg);
+        border-radius: 15px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        border: 1px solid var(--border-color);
+        margin-bottom: 1.5rem;
+    }
+    
+    .time-slot {
+        background: var(--sidebar-hover);
+        border-radius: 8px;
+        padding: 0.75rem;
+        margin-bottom: 0.5rem;
+        border-left: 4px solid #667eea;
+    }
+    
+    .route-badge {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 500;
+    }
+    
+    .calendar-view {
+        background: var(--card-bg);
+        border-radius: 15px;
+        padding: 1.5rem;
+        border: 1px solid var(--border-color);
+    }
+    
+    .calendar-header {
+        display: flex;
+        justify-content: between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+    
+    .calendar-day {
+        text-align: center;
+        padding: 0.75rem;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    
+    .calendar-day:hover {
+        background: var(--sidebar-hover);
+    }
+    
+    .calendar-day.active {
+        background: #667eea;
+        color: white;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 mb-1"><i class="fas fa-calendar me-2"></i>Schedule Management</h1>
+        <p class="text-muted mb-0">Manage bus schedules and route timings</p>
+    </div>
+    <div class="d-flex gap-2">
+        <button class="btn btn-outline-primary">
+            <i class="fas fa-download me-1"></i>Export Schedule
+        </button>
+        <button class="btn btn-primary">
+            <i class="fas fa-plus me-1"></i>Add Schedule
+        </button>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Today's Schedule -->
+    <div class="col-lg-8">
+        <div class="schedule-card">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0"><i class="fas fa-clock me-2"></i>Today's Schedule</h5>
+                <div class="btn-group btn-group-sm">
+                    <button class="btn btn-outline-secondary active">All Routes</button>
+                    <button class="btn btn-outline-secondary">Route 101</button>
+                    <button class="btn btn-outline-secondary">Route 205</button>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <h6 class="text-muted mb-3">Morning Schedule</h6>
+                    <div class="time-slot">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <div class="fw-semibold">06:00 AM - 06:30 AM</div>
+                                <small class="text-muted">Mumbai Central → Bandra</small>
+                            </div>
+                            <span class="route-badge bg-primary text-white">Route 101</span>
+                        </div>
+                    </div>
+                    <div class="time-slot">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <div class="fw-semibold">06:15 AM - 07:00 AM</div>
+                                <small class="text-muted">Delhi Metro → Connaught Place</small>
+                            </div>
+                            <span class="route-badge bg-info text-white">Route 205</span>
+                        </div>
+                    </div>
+                    <div class="time-slot">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <div class="fw-semibold">06:30 AM - 07:15 AM</div>
+                                <small class="text-muted">Electronic City → MG Road</small>
+                            </div>
+                            <span class="route-badge bg-success text-white">Route 118</span>
+                        </div>
+                    </div>
+                    <div class="time-slot">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <div class="fw-semibold">07:00 AM - 07:45 AM</div>
+                                <small class="text-muted">Chennai Central → T. Nagar</small>
+                            </div>
+                            <span class="route-badge bg-warning text-dark">Route 067</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <h6 class="text-muted mb-3">Evening Schedule</h6>
+                    <div class="time-slot">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <div class="fw-semibold">05:00 PM - 05:30 PM</div>
+                                <small class="text-muted">Bandra → Mumbai Central</small>
+                            </div>
+                            <span class="route-badge bg-primary text-white">Route 101</span>
+                        </div>
+                    </div>
+                    <div class="time-slot">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <div class="fw-semibold">05:15 PM - 06:00 PM</div>
+                                <small class="text-muted">Connaught Place → Delhi Metro</small>
+                            </div>
+                            <span class="route-badge bg-info text-white">Route 205</span>
+                        </div>
+                    </div>
+                    <div class="time-slot">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <div class="fw-semibold">05:30 PM - 06:15 PM</div>
+                                <small class="text-muted">MG Road → Electronic City</small>
+                            </div>
+                            <span class="route-badge bg-success text-white">Route 118</span>
+                        </div>
+                    </div>
+                    <div class="time-slot">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <div class="fw-semibold">06:00 PM - 06:45 PM</div>
+                                <small class="text-muted">T. Nagar → Chennai Central</small>
+                            </div>
+                            <span class="route-badge bg-warning text-dark">Route 067</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Calendar View -->
+    <div class="col-lg-4">
+        <div class="calendar-view">
+            <div class="calendar-header">
+                <h5 class="mb-0"><i class="fas fa-calendar-alt me-2"></i>January 2025</h5>
+                <div class="btn-group btn-group-sm">
+                    <button class="btn btn-outline-secondary">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <button class="btn btn-outline-secondary">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="row g-1 mb-3">
+                <div class="col text-center fw-semibold text-muted">Sun</div>
+                <div class="col text-center fw-semibold text-muted">Mon</div>
+                <div class="col text-center fw-semibold text-muted">Tue</div>
+                <div class="col text-center fw-semibold text-muted">Wed</div>
+                <div class="col text-center fw-semibold text-muted">Thu</div>
+                <div class="col text-center fw-semibold text-muted">Fri</div>
+                <div class="col text-center fw-semibold text-muted">Sat</div>
+            </div>
+            
+            <div class="row g-1">
+                <div class="col"><div class="calendar-day text-muted">29</div></div>
+                <div class="col"><div class="calendar-day text-muted">30</div></div>
+                <div class="col"><div class="calendar-day text-muted">31</div></div>
+                <div class="col"><div class="calendar-day">1</div></div>
+                <div class="col"><div class="calendar-day">2</div></div>
+                <div class="col"><div class="calendar-day">3</div></div>
+                <div class="col"><div class="calendar-day">4</div></div>
+            </div>
+            <div class="row g-1">
+                <div class="col"><div class="calendar-day">5</div></div>
+                <div class="col"><div class="calendar-day">6</div></div>
+                <div class="col"><div class="calendar-day">7</div></div>
+                <div class="col"><div class="calendar-day">8</div></div>
+                <div class="col"><div class="calendar-day">9</div></div>
+                <div class="col"><div class="calendar-day">10</div></div>
+                <div class="col"><div class="calendar-day">11</div></div>
+            </div>
+            <div class="row g-1">
+                <div class="col"><div class="calendar-day">12</div></div>
+                <div class="col"><div class="calendar-day">13</div></div>
+                <div class="col"><div class="calendar-day">14</div></div>
+                <div class="col"><div class="calendar-day">15</div></div>
+                <div class="col"><div class="calendar-day">16</div></div>
+                <div class="col"><div class="calendar-day">17</div></div>
+                <div class="col"><div class="calendar-day">18</div></div>
+            </div>
+            <div class="row g-1">
+                <div class="col"><div class="calendar-day">19</div></div>
+                <div class="col"><div class="calendar-day">20</div></div>
+                <div class="col"><div class="calendar-day">21</div></div>
+                <div class="col"><div class="calendar-day">22</div></div>
+                <div class="col"><div class="calendar-day">23</div></div>
+                <div class="col"><div class="calendar-day">24</div></div>
+                <div class="col"><div class="calendar-day active">25</div></div>
+            </div>
+            <div class="row g-1">
+                <div class="col"><div class="calendar-day">26</div></div>
+                <div class="col"><div class="calendar-day">27</div></div>
+                <div class="col"><div class="calendar-day">28</div></div>
+                <div class="col"><div class="calendar-day">29</div></div>
+                <div class="col"><div class="calendar-day">30</div></div>
+                <div class="col"><div class="calendar-day">31</div></div>
+                <div class="col"><div class="calendar-day text-muted">1</div></div>
+            </div>
+        </div>
+        
+        <!-- Schedule Statistics -->
+        <div class="schedule-card mt-3">
+            <h6 class="mb-3"><i class="fas fa-chart-bar me-2"></i>Schedule Statistics</h6>
+            <div class="d-flex justify-content-between mb-2">
+                <span>On-time Performance</span>
+                <strong>89.5%</strong>
+            </div>
+            <div class="progress mb-3" style="height: 6px;">
+                <div class="progress-bar bg-success" style="width: 89.5%"></div>
+            </div>
+            
+            <div class="d-flex justify-content-between mb-2">
+                <span>Schedule Adherence</span>
+                <strong>92.1%</strong>
+            </div>
+            <div class="progress mb-3" style="height: 6px;">
+                <div class="progress-bar bg-primary" style="width: 92.1%"></div>
+            </div>
+            
+            <div class="d-flex justify-content-between mb-2">
+                <span>Route Coverage</span>
+                <strong>96.8%</strong>
+            </div>
+            <div class="progress" style="height: 6px;">
+                <div class="progress-bar bg-info" style="width: 96.8%"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

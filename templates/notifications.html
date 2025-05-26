@@ -1,0 +1,347 @@
+{% extends "base.html" %}
+
+{% block title %}Notification Center - Smart Bus Tracking System{% endblock %}
+
+{% block head %}
+<style>
+    .notification-card {
+        background: var(--card-bg);
+        border-radius: 15px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        border: 1px solid var(--border-color);
+        margin-bottom: 1.5rem;
+    }
+    
+    .notification-item {
+        display: flex;
+        align-items: center;
+        padding: 1rem;
+        border-radius: 12px;
+        margin-bottom: 1rem;
+        border: 1px solid var(--border-color);
+        transition: all 0.2s ease;
+    }
+    
+    .notification-item:hover {
+        background: var(--sidebar-hover);
+    }
+    
+    .notification-item.unread {
+        border-left: 4px solid #667eea;
+        background: rgba(102, 126, 234, 0.05);
+    }
+    
+    .notification-icon {
+        width: 45px;
+        height: 45px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 1rem;
+        font-size: 1.2rem;
+        color: white;
+    }
+    
+    .notification-content {
+        flex: 1;
+    }
+    
+    .notification-title {
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+        color: var(--bs-body-color);
+    }
+    
+    .notification-message {
+        color: var(--sidebar-text);
+        font-size: 0.9rem;
+        margin-bottom: 0.25rem;
+    }
+    
+    .notification-time {
+        color: var(--sidebar-text);
+        font-size: 0.8rem;
+    }
+    
+    .notification-settings {
+        background: var(--card-bg);
+        border-radius: 15px;
+        padding: 1.5rem;
+        border: 1px solid var(--border-color);
+    }
+    
+    .setting-item {
+        display: flex;
+        justify-content: between;
+        align-items: center;
+        padding: 1rem 0;
+        border-bottom: 1px solid var(--border-color);
+    }
+    
+    .setting-item:last-child {
+        border-bottom: none;
+    }
+    
+    .toggle-switch {
+        position: relative;
+        width: 50px;
+        height: 24px;
+        background: #ccc;
+        border-radius: 24px;
+        cursor: pointer;
+        transition: background 0.3s;
+    }
+    
+    .toggle-switch.active {
+        background: #667eea;
+    }
+    
+    .toggle-switch::before {
+        content: '';
+        position: absolute;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: white;
+        top: 2px;
+        left: 2px;
+        transition: transform 0.3s;
+    }
+    
+    .toggle-switch.active::before {
+        transform: translateX(26px);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 mb-1"><i class="fas fa-bell me-2"></i>Notification Center</h1>
+        <p class="text-muted mb-0">Manage system alerts and user notifications</p>
+    </div>
+    <div class="d-flex gap-2">
+        <button class="btn btn-outline-secondary">
+            <i class="fas fa-check-double me-1"></i>Mark All Read
+        </button>
+        <button class="btn btn-primary">
+            <i class="fas fa-plus me-1"></i>Send Notification
+        </button>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Recent Notifications -->
+    <div class="col-lg-8">
+        <div class="notification-card">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0"><i class="fas fa-inbox me-2"></i>Recent Notifications</h5>
+                <div class="btn-group btn-group-sm">
+                    <button class="btn btn-outline-secondary active">All</button>
+                    <button class="btn btn-outline-secondary">Unread</button>
+                    <button class="btn btn-outline-secondary">System</button>
+                    <button class="btn btn-outline-secondary">User</button>
+                </div>
+            </div>
+            
+            <div class="notification-item unread">
+                <div class="notification-icon bg-danger">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <div class="notification-content">
+                    <div class="notification-title">Bus 205 Delayed</div>
+                    <div class="notification-message">Route 205 is running 15 minutes behind schedule due to heavy traffic on Ring Road</div>
+                    <div class="notification-time">2 minutes ago</div>
+                </div>
+                <div class="dropdown">
+                    <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="dropdown">
+                        <i class="fas fa-ellipsis-v"></i>
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="#"><i class="fas fa-check me-2"></i>Mark as Read</a></li>
+                        <li><a class="dropdown-item" href="#"><i class="fas fa-trash me-2"></i>Delete</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="notification-item unread">
+                <div class="notification-icon bg-warning">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="notification-content">
+                    <div class="notification-title">High Passenger Volume</div>
+                    <div class="notification-message">Route 101 experiencing 90% capacity during peak hours. Consider adding additional buses</div>
+                    <div class="notification-time">15 minutes ago</div>
+                </div>
+                <div class="dropdown">
+                    <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="dropdown">
+                        <i class="fas fa-ellipsis-v"></i>
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="#"><i class="fas fa-check me-2"></i>Mark as Read</a></li>
+                        <li><a class="dropdown-item" href="#"><i class="fas fa-trash me-2"></i>Delete</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="notification-item">
+                <div class="notification-icon bg-success">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="notification-content">
+                    <div class="notification-title">Maintenance Completed</div>
+                    <div class="notification-message">Scheduled maintenance for Bus 118 completed successfully. Vehicle back in service</div>
+                    <div class="notification-time">1 hour ago</div>
+                </div>
+                <div class="dropdown">
+                    <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="dropdown">
+                        <i class="fas fa-ellipsis-v"></i>
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="#"><i class="fas fa-trash me-2"></i>Delete</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="notification-item">
+                <div class="notification-icon bg-info">
+                    <i class="fas fa-map-marker-alt"></i>
+                </div>
+                <div class="notification-content">
+                    <div class="notification-title">New Stop Added</div>
+                    <div class="notification-message">Stop "Tech Park Junction" added to Route 118. Updated schedules sent to all subscribers</div>
+                    <div class="notification-time">3 hours ago</div>
+                </div>
+                <div class="dropdown">
+                    <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="dropdown">
+                        <i class="fas fa-ellipsis-v"></i>
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="#"><i class="fas fa-trash me-2"></i>Delete</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="notification-item">
+                <div class="notification-icon bg-primary">
+                    <i class="fas fa-mobile-alt"></i>
+                </div>
+                <div class="notification-content">
+                    <div class="notification-title">App Update Available</div>
+                    <div class="notification-message">Smart Bus Tracking v2.1.0 is now available with improved real-time tracking</div>
+                    <div class="notification-time">1 day ago</div>
+                </div>
+                <div class="dropdown">
+                    <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="dropdown">
+                        <i class="fas fa-ellipsis-v"></i>
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="#"><i class="fas fa-trash me-2"></i>Delete</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Notification Settings -->
+    <div class="col-lg-4">
+        <div class="notification-settings">
+            <h5 class="mb-3"><i class="fas fa-cog me-2"></i>Notification Settings</h5>
+            
+            <div class="setting-item">
+                <div>
+                    <div class="fw-semibold">Bus Delays</div>
+                    <small class="text-muted">Get notified when buses are delayed</small>
+                </div>
+                <div class="toggle-switch active" onclick="toggleSetting(this)"></div>
+            </div>
+            
+            <div class="setting-item">
+                <div>
+                    <div class="fw-semibold">High Capacity Alerts</div>
+                    <small class="text-muted">Alerts when buses reach 85% capacity</small>
+                </div>
+                <div class="toggle-switch active" onclick="toggleSetting(this)"></div>
+            </div>
+            
+            <div class="setting-item">
+                <div>
+                    <div class="fw-semibold">Maintenance Reminders</div>
+                    <small class="text-muted">Scheduled maintenance notifications</small>
+                </div>
+                <div class="toggle-switch active" onclick="toggleSetting(this)"></div>
+            </div>
+            
+            <div class="setting-item">
+                <div>
+                    <div class="fw-semibold">Route Updates</div>
+                    <small class="text-muted">Changes to routes and schedules</small>
+                </div>
+                <div class="toggle-switch" onclick="toggleSetting(this)"></div>
+            </div>
+            
+            <div class="setting-item">
+                <div>
+                    <div class="fw-semibold">System Alerts</div>
+                    <small class="text-muted">Critical system notifications</small>
+                </div>
+                <div class="toggle-switch active" onclick="toggleSetting(this)"></div>
+            </div>
+            
+            <div class="setting-item">
+                <div>
+                    <div class="fw-semibold">Email Notifications</div>
+                    <small class="text-muted">Send notifications via email</small>
+                </div>
+                <div class="toggle-switch" onclick="toggleSetting(this)"></div>
+            </div>
+        </div>
+        
+        <!-- Notification Stats -->
+        <div class="notification-card mt-3">
+            <h6 class="mb-3"><i class="fas fa-chart-line me-2"></i>Notification Statistics</h6>
+            
+            <div class="row text-center">
+                <div class="col-6">
+                    <div class="h4 text-primary mb-1">24</div>
+                    <small class="text-muted">Today</small>
+                </div>
+                <div class="col-6">
+                    <div class="h4 text-success mb-1">156</div>
+                    <small class="text-muted">This Week</small>
+                </div>
+            </div>
+            
+            <hr>
+            
+            <div class="row text-center">
+                <div class="col-6">
+                    <div class="h4 text-warning mb-1">8</div>
+                    <small class="text-muted">Unread</small>
+                </div>
+                <div class="col-6">
+                    <div class="h4 text-info mb-1">642</div>
+                    <small class="text-muted">Total Sent</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleSetting(element) {
+    element.classList.toggle('active');
+}
+
+// Mark notification as read when clicked
+document.querySelectorAll('.notification-item').forEach(item => {
+    item.addEventListener('click', function(e) {
+        if (!e.target.closest('.dropdown')) {
+            this.classList.remove('unread');
+        }
+    });
+});
+</script>
+{% endblock %}

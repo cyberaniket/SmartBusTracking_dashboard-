@@ -43,6 +43,21 @@ def register_routes(app):
         stops = db.session.query(Stop).all()
         return render_template('stops.html', stops=stops)
     
+    @app.route('/passengers')
+    def passengers():
+        """Render the passenger management page"""
+        return render_template('passengers.html')
+    
+    @app.route('/schedule')
+    def schedule():
+        """Render the schedule management page"""
+        return render_template('schedule.html')
+    
+    @app.route('/notifications')
+    def notifications():
+        """Render the notifications page"""
+        return render_template('notifications.html')
+    
     # API Routes for Mobile App
     
     @app.route('/api/buses', methods=['GET'])
