@@ -14,8 +14,17 @@
     <!-- Custom CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     
-    <!-- Google Maps API -->
+    <!-- Google Maps API with Places Library -->
     <script src="https://polyfill.io/v3/polyfill.min.js?features=default"></script>
+    <script>
+        // Global callback for Google Maps API
+        function initGoogleMaps() {
+            console.log('Google Maps API loaded successfully');
+            // Trigger custom event to notify pages that Google Maps is ready
+            window.dispatchEvent(new Event('googleMapsReady'));
+        }
+    </script>
+    <script async defer src="https://maps.googleapis.com/maps/api/js?key={{ config.GOOGLE_MAPS_API_KEY }}&libraries=places&callback=initGoogleMaps"></script>
     
     <style>
         :root {

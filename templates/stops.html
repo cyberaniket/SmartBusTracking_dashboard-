@@ -319,8 +319,14 @@
         // Initialize the stops map
         initStopsMap();
         
-        // Initialize address autocomplete
-        initAddressAutocomplete();
+        // Initialize address autocomplete when Google Maps is ready
+        if (typeof google !== 'undefined' && google.maps) {
+            initAddressAutocomplete();
+        } else {
+            window.addEventListener('googleMapsReady', function() {
+                initAddressAutocomplete();
+            });
+        }
         
         // Set up event listeners
         document.getElementById('saveStopBtn').addEventListener('click', saveStop);
@@ -398,6 +404,157 @@
             }
         });
     });
+    
+    function initAddressAutocomplete() {
+        // Initialize Google Places services
+        if (typeof google !== 'undefined' && google.maps && google.maps.places) {
+            const autocompleteService = new google.maps.places.AutocompleteService();
+            const geocoder = new google.maps.Geocoder();
+            
+            const addressInput = document.getElementById('stopAddress');
+            const suggestionsContainer = document.getElementById('addressSuggestions');
+            
+            let searchTimeout;
+            
+            // Set up address input event listener
+            addressInput.addEventListener('input', function() {
+                const query = this.value.trim();
+                
+                // Clear previous timeout
+                clearTimeout(searchTimeout);
+                
+                if (query.length < 3) {
+                    hideSuggestions();
+                    return;
+                }
+                
+                // Debounce the search to avoid too many API calls
+                searchTimeout = setTimeout(() => {
+                    searchAddresses(query, autocompleteService);
+                }, 300);
+            });
+            
+            // Hide suggestions when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!addressInput.contains(e.target) && !suggestionsContainer.contains(e.target)) {
+                    hideSuggestions();
+                }
+            });
+            
+            // Hide suggestions when ESC is pressed
+            addressInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    hideSuggestions();
+                }
+            });
+        } else {
+            console.log('Google Maps API not loaded. Address autocomplete will not work.');
+        }
+    }
+    
+    function searchAddresses(query, autocompleteService) {
+        const request = {
+            input: query,
+            componentRestrictions: { country: 'in' }, // Restrict to India
+            types: ['address', 'establishment', 'geocode']
+        };
+        
+        autocompleteService.getPlacePredictions(request, (predictions, status) => {
+            if (status === google.maps.places.PlacesServiceStatus.OK && predictions) {
+                displaySuggestions(predictions);
+            } else {
+                hideSuggestions();
+            }
+        });
+    }
+    
+    function displaySuggestions(predictions) {
+        const suggestionsContainer = document.getElementById('addressSuggestions');
+        suggestionsContainer.innerHTML = '';
+        
+        predictions.slice(0, 5).forEach(prediction => {
+            const suggestionItem = document.createElement('a');
+            suggestionItem.href = '#';
+            suggestionItem.className = 'list-group-item list-group-item-action';
+            suggestionItem.innerHTML = `
+                <div class="d-flex w-100 justify-content-between">
+                    <h6 class="mb-1">${prediction.structured_formatting.main_text}</h6>
+                    <small><i class="fas fa-map-marker-alt text-primary"></i></small>
+                </div>
+                <p class="mb-1 text-muted small">${prediction.structured_formatting.secondary_text}</p>
+            `;
+            
+            suggestionItem.addEventListener('click', function(e) {
+                e.preventDefault();
+                selectAddress(prediction);
+            });
+            
+            suggestionsContainer.appendChild(suggestionItem);
+        });
+        
+        suggestionsContainer.style.display = 'block';
+    }
+    
+    function selectAddress(prediction) {
+        const addressInput = document.getElementById('stopAddress');
+        addressInput.value = prediction.description;
+        
+        // Get detailed information including coordinates using Geocoder
+        const geocoder = new google.maps.Geocoder();
+        geocoder.geocode({ placeId: prediction.place_id }, (results, status) => {
+            if (status === 'OK') {
+                const place = results[0];
+                
+                // Auto-fill coordinates
+                const lat = place.geometry.location.lat();
+                const lng = place.geometry.location.lng();
+                
+                document.getElementById('stopLatitude').value = lat.toFixed(6);
+                document.getElementById('stopLongitude').value = lng.toFixed(6);
+                
+                // Auto-fill stop name if empty
+                const stopNameInput = document.getElementById('stopName');
+                if (!stopNameInput.value.trim()) {
+                    stopNameInput.value = prediction.structured_formatting.main_text;
+                }
+                
+                // Show success feedback
+                showAddressSelectedFeedback();
+                
+                // Update pick location map if modal is open
+                const modal = document.getElementById('addStopModal');
+                if (modal.classList.contains('show')) {
+                    updatePickLocationMap(lat, lng);
+                }
+            }
+        });
+        
+        hideSuggestions();
+    }
+    
+    function hideSuggestions() {
+        document.getElementById('addressSuggestions').style.display = 'none';
+    }
+    
+    function showAddressSelectedFeedback() {
+        const addressInput = document.getElementById('stopAddress');
+        const originalClass = addressInput.className;
+        
+        addressInput.className = originalClass + ' is-valid';
+        
+        setTimeout(() => {
+            addressInput.className = originalClass;
+        }, 2000);
+    }
+    
+    function updatePickLocationMap(lat, lng) {
+        // Update the pick location map with new coordinates
+        if (window.pickLocationMap && window.pickLocationMarker) {
+            const newLatLng = L.latLng(lat, lng);
+            window.pickLocationMarker.setLatLng(newLatLng);
+            window.pickLocationMap.setView(newLatLng, 16);
+        }
+    }
     
     // Initialize the stops map
     let stopsMap;

@@ -41,7 +41,7 @@ def register_routes(app):
     def stops():
         """Render the stops management page"""
         stops = db.session.query(Stop).all()
-        return render_template('stops.html', stops=stops)
+        return render_template('stops.html', stops=stops, config=app.config)
     
     @app.route('/passengers')
     def passengers():
@@ -121,6 +121,41 @@ def register_routes(app):
         response.headers['Content-Type'] = 'text/csv'
         response.headers['Content-Disposition'] = 'attachment; filename=routes_export.csv'
         return response
+    
+    # Stop Management API
+    @app.route('/api/stops/add', methods=['POST'])
+    def add_stop():
+        """Add a new stop"""
+        from flask import request, jsonify
+        
+        try:
+            data = request.get_json()
+            
+            # Create new stop
+            new_stop = Stop(
+                stop_code=data['stop_code'],
+                name=data['name'],
+                address=data.get('address', ''),
+                latitude=float(data['latitude']),
+                longitude=float(data['longitude']),
+                is_active=data.get('is_active', True)
+            )
+            
+            db.session.add(new_stop)
+            db.session.commit()
+            
+            return jsonify({
+                'success': True,
+                'message': 'Stop added successfully',
+                'stop_id': new_stop.id
+            })
+            
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({
+                'success': False,
+                'message': f'Error adding stop: {str(e)}'
+            }), 400
     
     # API Routes for Mobile App
     
