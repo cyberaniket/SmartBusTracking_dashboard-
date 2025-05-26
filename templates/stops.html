@@ -416,53 +416,69 @@
     });
     
     function initAddressAutocomplete() {
-        // Initialize Google Places Autocomplete directly on input field
-        if (typeof google !== 'undefined' && google.maps && google.maps.places) {
-            const addressInput = document.getElementById('stopAddress');
-            
-            // Create autocomplete object, restricting search to India
-            const autocomplete = new google.maps.places.Autocomplete(addressInput, {
-                componentRestrictions: { country: 'in' },
-                types: ['address', 'establishment', 'geocode'],
-                fields: ['place_id', 'geometry', 'name', 'formatted_address']
-            });
-            
-            // Listen for the event fired when the user selects a prediction
-            autocomplete.addListener('place_changed', function() {
-                const place = autocomplete.getPlace();
+        // Wait for Google Maps to be available
+        function setupAutocomplete() {
+            try {
+                const addressInput = document.getElementById('stopAddress');
                 
-                if (!place.geometry || !place.geometry.location) {
-                    console.log("No details available for input: '" + place.name + "'");
-                    return;
-                }
+                // Create autocomplete object, restricting search to India
+                const autocomplete = new google.maps.places.Autocomplete(addressInput, {
+                    componentRestrictions: { country: 'in' },
+                    types: ['establishment', 'geocode'],
+                    fields: ['place_id', 'geometry', 'name', 'formatted_address']
+                });
                 
-                // Auto-fill coordinates
-                const lat = place.geometry.location.lat();
-                const lng = place.geometry.location.lng();
+                // Listen for the event fired when the user selects a prediction
+                autocomplete.addListener('place_changed', function() {
+                    const place = autocomplete.getPlace();
+                    
+                    if (!place.geometry || !place.geometry.location) {
+                        console.log("No location details available");
+                        return;
+                    }
+                    
+                    // Auto-fill coordinates
+                    const lat = place.geometry.location.lat();
+                    const lng = place.geometry.location.lng();
+                    
+                    document.getElementById('stopLatitude').value = lat.toFixed(6);
+                    document.getElementById('stopLongitude').value = lng.toFixed(6);
+                    
+                    // Auto-fill stop name if empty
+                    const stopNameInput = document.getElementById('stopName');
+                    if (!stopNameInput.value.trim()) {
+                        stopNameInput.value = place.name || extractLocationName(place.formatted_address);
+                    }
+                    
+                    // Show success feedback
+                    showAddressSelectedFeedback();
+                });
                 
-                document.getElementById('stopLatitude').value = lat.toFixed(6);
-                document.getElementById('stopLongitude').value = lng.toFixed(6);
-                
-                // Auto-fill stop name if empty
-                const stopNameInput = document.getElementById('stopName');
-                if (!stopNameInput.value.trim()) {
-                    stopNameInput.value = place.name || 'Bus Stop';
-                }
-                
-                // Show success feedback
-                showAddressSelectedFeedback();
-                
-                // Update pick location map if modal is open
-                const modal = document.getElementById('addStopModal');
-                if (modal.classList.contains('show')) {
-                    updatePickLocationMap(lat, lng);
-                }
-            });
-            
-            console.log('Google Places Autocomplete initialized successfully');
-        } else {
-            console.log('Google Maps API not loaded. Address autocomplete will not work.');
+                console.log('Google Places Autocomplete initialized successfully');
+            } catch (error) {
+                console.error('Error initializing autocomplete:', error);
+            }
         }
+        
+        // Check if Google Maps is available
+        if (typeof google !== 'undefined' && google.maps && google.maps.places) {
+            setupAutocomplete();
+        } else {
+            // Wait for Google Maps to load
+            window.addEventListener('googleMapsReady', setupAutocomplete);
+            // Also try with a timeout as backup
+            setTimeout(() => {
+                if (typeof google !== 'undefined' && google.maps && google.maps.places) {
+                    setupAutocomplete();
+                }
+            }, 2000);
+        }
+    }
+    
+    function extractLocationName(formattedAddress) {
+        // Extract a meaningful location name from formatted address
+        const parts = formattedAddress.split(',');
+        return parts[0].trim() + ' Bus Stop';
     }
     
     function searchAddresses(query, autocompleteService) {
@@ -563,9 +579,10 @@
     function updatePickLocationMap(lat, lng) {
         // Update the pick location map with new coordinates
         if (window.pickLocationMap && window.pickLocationMarker) {
-            const newLatLng = L.latLng(lat, lng);
-            window.pickLocationMarker.setLatLng(newLatLng);
-            window.pickLocationMap.setView(newLatLng, 16);
+            const newPosition = { lat: lat, lng: lng };
+            window.pickLocationMarker.setPosition(newPosition);
+            window.pickLocationMap.setCenter(newPosition);
+            window.pickLocationMap.setZoom(16);
         }
     }
     
