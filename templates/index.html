@@ -1,19 +1,104 @@
 {% extends "base.html" %}
 
-{% block title %}Dashboard - Smart Bus Tracking System{% endblock %}
+{% block title %}Analytics Dashboard - Smart Bus Tracking System{% endblock %}
 
 {% block head %}
 <style>
-    #map {
-        height: 500px;
-        width: 100%;
-        border-radius: 8px;
+    body {
+        background-color: #f8f9fa;
     }
-    .stats-card {
-        transition: transform 0.3s;
+    
+    .analytics-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 2rem 0;
+        margin-bottom: 2rem;
+        border-radius: 0 0 15px 15px;
     }
-    .stats-card:hover {
+    
+    .metric-card {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+        border: none;
+        height: 100%;
+    }
+    
+    .metric-card:hover {
         transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    }
+    
+    .metric-value {
+        font-size: 2.5rem;
+        font-weight: bold;
+        margin: 0.5rem 0;
+    }
+    
+    .metric-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: white;
+        margin-bottom: 1rem;
+    }
+    
+    .metric-trend {
+        font-size: 0.875rem;
+        margin-top: 0.5rem;
+    }
+    
+    .chart-card {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        border: none;
+        margin-bottom: 2rem;
+    }
+    
+    .performance-table {
+        background: white;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    
+    .table-header {
+        background: #f8f9fa;
+        padding: 1.5rem;
+        border-bottom: 1px solid #dee2e6;
+    }
+    
+    .progress-custom {
+        height: 8px;
+        border-radius: 20px;
+        background-color: #e9ecef;
+    }
+    
+    .progress-bar-custom {
+        border-radius: 20px;
+    }
+    
+    #map {
+        height: 400px;
+        width: 100%;
+        border-radius: 15px;
+    }
+    
+    .world-map-container {
+        background: white;
+        border-radius: 15px;
+        padding: 1rem;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        position: relative;
+        min-height: 300px;
     }
     
     /* Map Controls */
@@ -74,162 +159,281 @@
 {% endblock %}
 
 {% block content %}
-<div class="row mb-4">
-    <div class="col-12">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <h1 class="h3"><i class="fas fa-tachometer-alt me-2"></i>System Dashboard</h1>
-            <div>
-                <span class="badge bg-success me-2">
-                    <i class="fas fa-satellite-dish me-1"></i> MQTT: Connected
-                </span>
-                <span class="badge bg-info">
-                    <i class="fas fa-database me-1"></i> Database: Online
-                </span>
+<!-- Analytics Header -->
+<div class="analytics-header">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="h2 mb-1">
+                    <i class="fas fa-chart-bar me-3"></i>Bus Fleet Analytics
+                </h1>
+                <p class="mb-0 opacity-75">Real-time insights into your smart bus tracking system</p>
             </div>
-        </div>
-    </div>
-</div>
-
-<!-- Stats Cards -->
-<div class="row mb-4">
-    <div class="col-md-3 mb-3">
-        <div class="card bg-primary text-white stats-card h-100">
-            <div class="card-body">
-                <h5 class="card-title"><i class="fas fa-bus me-2"></i>Active Buses</h5>
-                <h2 class="display-4 mb-0" id="active-buses-count">--</h2>
-                <p class="card-text mt-2">Buses currently in service</p>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3 mb-3">
-        <div class="card bg-success text-white stats-card h-100">
-            <div class="card-body">
-                <h5 class="card-title"><i class="fas fa-route me-2"></i>Active Routes</h5>
-                <h2 class="display-4 mb-0" id="active-routes-count">--</h2>
-                <p class="card-text mt-2">Routes currently operating</p>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3 mb-3">
-        <div class="card bg-info text-white stats-card h-100">
-            <div class="card-body">
-                <h5 class="card-title"><i class="fas fa-map-marker-alt me-2"></i>Bus Stops</h5>
-                <h2 class="display-4 mb-0" id="stops-count">--</h2>
-                <p class="card-text mt-2">Total stops in the system</p>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3 mb-3">
-        <div class="card bg-warning text-dark stats-card h-100">
-            <div class="card-body">
-                <h5 class="card-title"><i class="fas fa-exclamation-triangle me-2"></i>Delayed Buses</h5>
-                <h2 class="display-4 mb-0" id="delayed-buses-count">--</h2>
-                <p class="card-text mt-2">Buses currently delayed</p>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Live Map and Recent Activity -->
-<div class="row mb-4">
-    <div class="col-lg-8 mb-3">
-        <div class="card h-100">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0"><i class="fas fa-map-marked-alt me-2"></i>Live Bus Tracking (India)</h5>
-                <div class="btn-group" role="group">
-                    <button type="button" class="btn btn-sm btn-outline-primary" id="traffic-toggle-btn">
-                        <i class="fas fa-car me-1"></i> Traffic
-                    </button>
-                    <button type="button" class="btn btn-sm btn-outline-primary" id="refresh-map">
-                        <i class="fas fa-sync-alt me-1"></i> Refresh
-                    </button>
-                    <button type="button" class="btn btn-sm btn-outline-secondary" id="center-map">
-                        <i class="fas fa-crosshairs me-1"></i> Center
-                    </button>
+            <div class="col-md-4 text-md-end">
+                <div class="d-flex justify-content-md-end gap-2">
+                    <span class="badge bg-light bg-opacity-25 px-3 py-2">
+                        <i class="fas fa-satellite-dish me-1"></i> Live Data
+                    </span>
+                    <span class="badge bg-light bg-opacity-25 px-3 py-2">
+                        <i class="fas fa-sync-alt me-1"></i> Auto Refresh
+                    </span>
                 </div>
             </div>
-            <div class="card-body p-0 position-relative">
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <!-- Key Metrics -->
+    <div class="row mb-4">
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="metric-card">
+                <div class="metric-icon" style="background: linear-gradient(45deg, #667eea, #764ba2);">
+                    <i class="fas fa-bus"></i>
+                </div>
+                <div class="metric-value text-primary" id="active-buses-count">--</div>
+                <h6 class="text-muted mb-0">Active Buses</h6>
+                <div class="metric-trend">
+                    <span class="text-success"><i class="fas fa-arrow-up"></i> 12%</span>
+                    <small class="text-muted ms-1">vs last week</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="metric-card">
+                <div class="metric-icon" style="background: linear-gradient(45deg, #f093fb, #f5576c);">
+                    <i class="fas fa-route"></i>
+                </div>
+                <div class="metric-value text-danger" id="active-routes-count">--</div>
+                <h6 class="text-muted mb-0">Active Routes</h6>
+                <div class="metric-trend">
+                    <span class="text-success"><i class="fas fa-arrow-up"></i> 8%</span>
+                    <small class="text-muted ms-1">vs last week</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="metric-card">
+                <div class="metric-icon" style="background: linear-gradient(45deg, #4facfe, #00f2fe);">
+                    <i class="fas fa-map-marker-alt"></i>
+                </div>
+                <div class="metric-value text-info" id="stops-count">--</div>
+                <h6 class="text-muted mb-0">Bus Stops</h6>
+                <div class="metric-trend">
+                    <span class="text-success"><i class="fas fa-arrow-up"></i> 5%</span>
+                    <small class="text-muted ms-1">vs last week</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="metric-card">
+                <div class="metric-icon" style="background: linear-gradient(45deg, #fa709a, #fee140);">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <div class="metric-value text-warning" id="delayed-buses-count">--</div>
+                <h6 class="text-muted mb-0">Delays</h6>
+                <div class="metric-trend">
+                    <span class="text-danger"><i class="fas fa-arrow-down"></i> 3%</span>
+                    <small class="text-muted ms-1">vs last week</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Performance Charts Row -->
+    <div class="row mb-4">
+        <div class="col-lg-4 mb-4">
+            <div class="chart-card">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h6 class="mb-0"><i class="fas fa-chart-line me-2"></i>Daily Operations</h6>
+                    <span class="badge bg-success">+15% increase</span>
+                </div>
+                <canvas id="daily-operations-chart" height="200"></canvas>
+                <div class="mt-3">
+                    <small class="text-muted">Last updated 4 min ago</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4 mb-4">
+            <div class="chart-card">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h6 class="mb-0"><i class="fas fa-chart-area me-2"></i>Route Efficiency</h6>
+                    <span class="badge bg-info">Optimized</span>
+                </div>
+                <canvas id="route-efficiency-chart" height="200"></canvas>
+                <div class="mt-3">
+                    <small class="text-muted">Last updated 4 min ago</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4 mb-4">
+            <div class="chart-card">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h6 class="mb-0"><i class="fas fa-chart-bar me-2"></i>Performance Score</h6>
+                    <span class="badge bg-warning">Good</span>
+                </div>
+                <canvas id="performance-score-chart" height="200"></canvas>
+                <div class="mt-3">
+                    <small class="text-muted">Last updated 4 min ago</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Row -->
+    <div class="row mb-4">
+        <div class="col-lg-8 mb-4">
+            <!-- Route Performance Table -->
+            <div class="performance-table">
+                <div class="table-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0"><i class="fas fa-route me-2"></i>Route Performance</h6>
+                        <button class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-download me-1"></i>Export
+                        </button>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0" id="route-performance-table">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Route</th>
+                                <th>Buses</th>
+                                <th>Avg Speed</th>
+                                <th>On-Time %</th>
+                                <th>Efficiency</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="route-flag me-2">🇮🇳</div>
+                                        <div>
+                                            <div class="fw-semibold">Route 101</div>
+                                            <small class="text-muted">Mumbai Central</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="fw-semibold">12</span>
+                                </td>
+                                <td>
+                                    <span class="fw-semibold">₹45.2k</span>
+                                </td>
+                                <td>
+                                    <span class="fw-semibold text-success">87.5%</span>
+                                </td>
+                                <td>
+                                    <div class="progress progress-custom">
+                                        <div class="progress-bar progress-bar-custom bg-success" style="width: 87.5%"></div>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="route-flag me-2">🇮🇳</div>
+                                        <div>
+                                            <div class="fw-semibold">Route 205</div>
+                                            <small class="text-muted">Delhi Metro</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="fw-semibold">8</span>
+                                </td>
+                                <td>
+                                    <span class="fw-semibold">₹32.8k</span>
+                                </td>
+                                <td>
+                                    <span class="fw-semibold text-warning">75.2%</span>
+                                </td>
+                                <td>
+                                    <div class="progress progress-custom">
+                                        <div class="progress-bar progress-bar-custom bg-warning" style="width: 75.2%"></div>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="route-flag me-2">🇮🇳</div>
+                                        <div>
+                                            <div class="fw-semibold">Route 118</div>
+                                            <small class="text-muted">Bangalore Tech</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="fw-semibold">15</span>
+                                </td>
+                                <td>
+                                    <span class="fw-semibold">₹58.9k</span>
+                                </td>
+                                <td>
+                                    <span class="fw-semibold text-success">92.1%</span>
+                                </td>
+                                <td>
+                                    <div class="progress progress-custom">
+                                        <div class="progress-bar progress-bar-custom bg-success" style="width: 92.1%"></div>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="route-flag me-2">🇮🇳</div>
+                                        <div>
+                                            <div class="fw-semibold">Route 067</div>
+                                            <small class="text-muted">Chennai Express</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="fw-semibold">6</span>
+                                </td>
+                                <td>
+                                    <span class="fw-semibold">₹28.4k</span>
+                                </td>
+                                <td>
+                                    <span class="fw-semibold text-danger">68.9%</span>
+                                </td>
+                                <td>
+                                    <div class="progress progress-custom">
+                                        <div class="progress-bar progress-bar-custom bg-danger" style="width: 68.9%"></div>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4 mb-4">
+            <!-- Live Map -->
+            <div class="world-map-container">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h6 class="mb-0"><i class="fas fa-globe-asia me-2"></i>Live Tracking</h6>
+                    <div class="btn-group btn-group-sm">
+                        <button class="btn btn-outline-secondary" id="refresh-map">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                        <button class="btn btn-outline-secondary" id="center-map">
+                            <i class="fas fa-crosshairs"></i>
+                        </button>
+                    </div>
+                </div>
                 <div id="map"></div>
-                
-                <!-- Traffic Analysis Panel -->
-                <div class="traffic-analysis-panel" id="traffic-analysis-panel" style="display: none;">
-                    <h6><i class="fas fa-traffic-light me-2"></i>Traffic Analysis</h6>
-                    <p class="mb-2">Current traffic conditions in major Indian cities:</p>
-                    
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="list-group list-group-flush" id="traffic-cities-list">
-                                <div class="list-group-item d-flex justify-content-between align-items-center">
-                                    <span>Delhi</span>
-                                    <div class="progress" style="width: 70%">
-                                        <div class="progress-bar bg-danger" role="progressbar" style="width: 85%" aria-valuenow="85" aria-valuemin="0" aria-valuemax="100"></div>
-                                    </div>
-                                </div>
-                                <div class="list-group-item d-flex justify-content-between align-items-center">
-                                    <span>Mumbai</span>
-                                    <div class="progress" style="width: 70%">
-                                        <div class="progress-bar bg-danger" role="progressbar" style="width: 80%" aria-valuenow="80" aria-valuemin="0" aria-valuemax="100"></div>
-                                    </div>
-                                </div>
-                                <div class="list-group-item d-flex justify-content-between align-items-center">
-                                    <span>Bangalore</span>
-                                    <div class="progress" style="width: 70%">
-                                        <div class="progress-bar bg-warning" role="progressbar" style="width: 65%" aria-valuenow="65" aria-valuemin="0" aria-valuemax="100"></div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="list-group list-group-flush">
-                                <div class="list-group-item d-flex justify-content-between align-items-center">
-                                    <span>Chennai</span>
-                                    <div class="progress" style="width: 70%">
-                                        <div class="progress-bar bg-warning" role="progressbar" style="width: 60%" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100"></div>
-                                    </div>
-                                </div>
-                                <div class="list-group-item d-flex justify-content-between align-items-center">
-                                    <span>Hyderabad</span>
-                                    <div class="progress" style="width: 70%">
-                                        <div class="progress-bar bg-success" role="progressbar" style="width: 40%" aria-valuenow="40" aria-valuemin="0" aria-valuemax="100"></div>
-                                    </div>
-                                </div>
-                                <div class="list-group-item d-flex justify-content-between align-items-center">
-                                    <span>Kolkata</span>
-                                    <div class="progress" style="width: 70%">
-                                        <div class="progress-bar bg-warning" role="progressbar" style="width: 55%" aria-valuenow="55" aria-valuemin="0" aria-valuemax="100"></div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="traffic-legend mt-2">
-                        <div class="legend-item">
-                            <div class="legend-color legend-low"></div>
-                            <small>Low Congestion</small>
-                        </div>
-                        <div class="legend-item">
-                            <div class="legend-color legend-high"></div>
-                            <small>High Congestion</small>
-                        </div>
-                    </div>
-                    
-                    <button type="button" class="btn btn-sm btn-outline-primary india-focus-button" id="india-focus-btn">
-                        <i class="fas fa-globe-asia me-1"></i> Focus on All India
-                    </button>
-                </div>
             </div>
-        </div>
-    </div>
-    <div class="col-lg-4 mb-3">
-        <div class="card h-100">
-            <div class="card-header">
-                <h5 class="mb-0"><i class="fas fa-history me-2"></i>Recent Activity</h5>
-            </div>
-            <div class="card-body p-0">
-                <div class="list-group list-group-flush" id="recent-activity">
-                    <div class="list-group-item d-flex justify-content-center align-items-center py-5">
-                        <div class="spinner-border text-primary" role="status">
+            
+            <!-- Recent Activity -->
+            <div class="mt-3">
+                <h6 class="mb-3"><i class="fas fa-bell me-2"></i>Recent Events</h6>
+                <div id="recent-activity">
+                    <div class="d-flex justify-content-center py-3">
+                        <div class="spinner-border spinner-border-sm text-primary" role="status">
                             <span class="visually-hidden">Loading...</span>
                         </div>
                     </div>
@@ -237,17 +441,47 @@
             </div>
         </div>
     </div>
-</div>
 
-<!-- System Performance -->
-<div class="row mb-4">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0"><i class="fas fa-chart-line me-2"></i>System Performance</h5>
+    <!-- Bottom Analytics Row -->
+    <div class="row mb-4">
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="chart-card text-center">
+                <div class="metric-icon mx-auto mb-3" style="background: linear-gradient(45deg, #11998e, #38ef7d);">
+                    <i class="fas fa-users"></i>
+                </div>
+                <h3 class="text-dark mb-1" id="passengers-served">24,586</h3>
+                <p class="text-muted mb-2">Passengers Served</p>
+                <small class="text-success"><i class="fas fa-arrow-up"></i> +18% today</small>
             </div>
-            <div class="card-body">
-                <canvas id="performance-chart" height="100"></canvas>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="chart-card text-center">
+                <div class="metric-icon mx-auto mb-3" style="background: linear-gradient(45deg, #ff416c, #ff4b2b);">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <h3 class="text-dark mb-1" id="avg-wait-time">4.2 min</h3>
+                <p class="text-muted mb-2">Avg Wait Time</p>
+                <small class="text-success"><i class="fas fa-arrow-down"></i> -12% today</small>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="chart-card text-center">
+                <div class="metric-icon mx-auto mb-3" style="background: linear-gradient(45deg, #ffecd2, #fcb69f);">
+                    <i class="fas fa-gas-pump"></i>
+                </div>
+                <h3 class="text-dark mb-1" id="fuel-efficiency">12.8 km/L</h3>
+                <p class="text-muted mb-2">Fuel Efficiency</p>
+                <small class="text-info"><i class="fas fa-minus"></i> Stable</small>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="chart-card text-center">
+                <div class="metric-icon mx-auto mb-3" style="background: linear-gradient(45deg, #a8edea, #fed6e3);">
+                    <i class="fas fa-star"></i>
+                </div>
+                <h3 class="text-dark mb-1" id="satisfaction-score">4.6/5</h3>
+                <p class="text-muted mb-2">Satisfaction Score</p>
+                <small class="text-success"><i class="fas fa-arrow-up"></i> +0.3 this week</small>
             </div>
         </div>
     </div>
@@ -276,32 +510,18 @@
         // Setup auto-refresh
         setInterval(loadDashboardData, 30000); // Refresh every 30 seconds
         
-        // Initialize performance chart
-        initPerformanceChart();
+        // Initialize all charts
+        initAnalyticsCharts();
         
         // Setup refresh button
         document.getElementById('refresh-map').addEventListener('click', function() {
             loadBusLocations();
-            loadRoutes(); // Refresh routes with traffic data
         });
         
         // Setup center map button
         document.getElementById('center-map').addEventListener('click', function() {
             centerMap();
         });
-        
-        // Setup traffic toggle button
-        document.getElementById('traffic-toggle-btn').addEventListener('click', function() {
-            toggleTrafficPanel();
-        });
-        
-        // Setup India focus button
-        document.getElementById('india-focus-btn').addEventListener('click', function() {
-            focusOnIndia();
-        });
-        
-        // Initialize traffic analysis for routes
-        initTrafficAnalysis();
     });
     
     // Toggle traffic analysis panel
@@ -351,61 +571,135 @@
         map.setZoom(5);
     }
     
-    function initPerformanceChart() {
-        const ctx = document.getElementById('performance-chart').getContext('2d');
+    // Initialize all analytics charts
+    function initAnalyticsCharts() {
+        initDailyOperationsChart();
+        initRouteEfficiencyChart();
+        initPerformanceScoreChart();
+    }
+    
+    function initDailyOperationsChart() {
+        const ctx = document.getElementById('daily-operations-chart').getContext('2d');
+        const gradient = ctx.createLinearGradient(0, 0, 0, 200);
+        gradient.addColorStop(0, 'rgba(102, 126, 234, 0.8)');
+        gradient.addColorStop(1, 'rgba(118, 75, 162, 0.1)');
         
-        // Generate some sample data for now
-        const labels = Array.from({length: 24}, (_, i) => `${i}:00`);
-        const busData = Array.from({length: 24}, () => Math.floor(Math.random() * 50) + 10);
-        const responseData = Array.from({length: 24}, () => Math.floor(Math.random() * 500) + 100);
-        
-        const chart = new Chart(ctx, {
-            type: 'line',
+        new Chart(ctx, {
+            type: 'bar',
             data: {
-                labels: labels,
-                datasets: [
-                    {
-                        label: 'Active Buses',
-                        data: busData,
-                        borderColor: 'rgba(13, 110, 253, 1)',
-                        backgroundColor: 'rgba(13, 110, 253, 0.1)',
-                        tension: 0.4,
-                        fill: true
-                    },
-                    {
-                        label: 'API Response Time (ms)',
-                        data: responseData,
-                        borderColor: 'rgba(220, 53, 69, 1)',
-                        backgroundColor: 'rgba(220, 53, 69, 0.1)',
-                        tension: 0.4,
-                        fill: true,
-                        yAxisID: 'y1'
-                    }
-                ]
+                labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                datasets: [{
+                    label: 'Bus Operations',
+                    data: [65, 85, 92, 78, 95, 68, 45],
+                    backgroundColor: gradient,
+                    borderColor: '#667eea',
+                    borderWidth: 2,
+                    borderRadius: 8,
+                    borderSkipped: false,
+                }]
             },
             options: {
                 responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
                 scales: {
-                    y: {
+                    y: { 
                         beginAtZero: true,
-                        title: {
-                            display: true,
-                            text: 'Active Buses'
-                        }
+                        grid: { display: false },
+                        ticks: { display: false }
                     },
-                    y1: {
+                    x: { 
+                        grid: { display: false },
+                        ticks: { font: { size: 12 } }
+                    }
+                }
+            }
+        });
+    }
+    
+    function initRouteEfficiencyChart() {
+        const ctx = document.getElementById('route-efficiency-chart').getContext('2d');
+        const gradient = ctx.createLinearGradient(0, 0, 0, 200);
+        gradient.addColorStop(0, 'rgba(76, 175, 80, 0.8)');
+        gradient.addColorStop(1, 'rgba(76, 175, 80, 0.1)');
+        
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+                datasets: [{
+                    label: 'Efficiency %',
+                    data: [78, 82, 85, 88, 92, 89, 94, 96, 93, 97, 95, 98],
+                    borderColor: '#4CAF50',
+                    backgroundColor: gradient,
+                    tension: 0.4,
+                    fill: true,
+                    pointBackgroundColor: '#4CAF50',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    pointRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    y: { 
                         beginAtZero: true,
-                        position: 'right',
-                        title: {
-                            display: true,
-                            text: 'Response Time (ms)'
-                        },
-                        grid: {
-                            drawOnChartArea: false
+                        max: 100,
+                        grid: { display: false },
+                        ticks: { display: false }
+                    },
+                    x: { 
+                        grid: { display: false },
+                        ticks: { font: { size: 10 } }
+                    }
+                }
+            }
+        });
+    }
+    
+    function initPerformanceScoreChart() {
+        const ctx = document.getElementById('performance-score-chart').getContext('2d');
+        
+        new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Excellent', 'Good', 'Average', 'Poor'],
+                datasets: [{
+                    data: [45, 35, 15, 5],
+                    backgroundColor: [
+                        '#4CAF50',
+                        '#2196F3', 
+                        '#FF9800',
+                        '#F44336'
+                    ],
+                    borderWidth: 0,
+                    cutout: '70%'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { 
+                        display: true,
+                        position: 'bottom',
+                        labels: { 
+                            usePointStyle: true,
+                            padding: 15,
+                            font: { size: 11 }
                         }
                     }
                 }
             }
+        });
+    }
         });
     }
 </script>
