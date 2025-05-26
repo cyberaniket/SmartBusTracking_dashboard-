@@ -159,7 +159,9 @@
                     </div>
                     <div class="mb-3">
                         <label for="stopAddress" class="form-label">Address</label>
-                        <input type="text" class="form-control" id="stopAddress">
+                        <input type="text" class="form-control" id="stopAddress" placeholder="Start typing address...">
+                        <div class="form-text">Address will be auto-completed as you type</div>
+                        <div id="addressSuggestions" class="list-group mt-1" style="display: none; position: absolute; z-index: 1050; width: calc(100% - 30px);"></div>
                     </div>
                     <div class="row mb-3">
                         <div class="col-6">
@@ -308,9 +310,17 @@
 
 {% block scripts %}
 <script>
+    let map, stopsMap, pickLocationMap;
+    let autocompleteService;
+    let geocoder;
+    let placesService;
+    
     document.addEventListener('DOMContentLoaded', function() {
         // Initialize the stops map
         initStopsMap();
+        
+        // Initialize address autocomplete
+        initAddressAutocomplete();
         
         // Set up event listeners
         document.getElementById('saveStopBtn').addEventListener('click', saveStop);

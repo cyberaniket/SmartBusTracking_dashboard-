@@ -58,6 +58,70 @@ def register_routes(app):
         """Render the notifications page"""
         return render_template('notifications.html')
     
+    # Export functionality
+    @app.route('/api/export/buses', methods=['GET'])
+    def export_buses():
+        """Export bus data as CSV"""
+        from flask import make_response
+        import csv
+        import io
+        
+        buses = db.session.query(Bus).all()
+        output = io.StringIO()
+        writer = csv.writer(output)
+        
+        # Write header
+        writer.writerow(['ID', 'Bus Number', 'License Plate', 'Capacity', 'Status', 'Current Route', 'Last Updated'])
+        
+        # Write data
+        for bus in buses:
+            writer.writerow([
+                bus.id,
+                bus.bus_number,
+                bus.license_plate,
+                bus.capacity,
+                'Active' if bus.is_active else 'Inactive',
+                bus.current_route.route_number if bus.current_route else 'None',
+                bus.last_updated.strftime('%Y-%m-%d %H:%M:%S') if bus.last_updated else 'Never'
+            ])
+        
+        output.seek(0)
+        response = make_response(output.getvalue())
+        response.headers['Content-Type'] = 'text/csv'
+        response.headers['Content-Disposition'] = 'attachment; filename=buses_export.csv'
+        return response
+    
+    @app.route('/api/export/routes', methods=['GET'])
+    def export_routes():
+        """Export route data as CSV"""
+        from flask import make_response
+        import csv
+        import io
+        
+        routes = db.session.query(Route).all()
+        output = io.StringIO()
+        writer = csv.writer(output)
+        
+        # Write header
+        writer.writerow(['ID', 'Route Number', 'Name', 'Description', 'Status', 'Total Stops'])
+        
+        # Write data
+        for route in routes:
+            writer.writerow([
+                route.id,
+                route.route_number,
+                route.name,
+                route.description or '',
+                'Active' if route.is_active else 'Inactive',
+                len(route.stops)
+            ])
+        
+        output.seek(0)
+        response = make_response(output.getvalue())
+        response.headers['Content-Type'] = 'text/csv'
+        response.headers['Content-Disposition'] = 'attachment; filename=routes_export.csv'
+        return response
+    
     # API Routes for Mobile App
     
     @app.route('/api/buses', methods=['GET'])

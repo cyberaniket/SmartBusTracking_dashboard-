@@ -216,12 +216,12 @@
             </div>
             <div class="col-md-4 text-md-end">
                 <div class="d-flex justify-content-md-end gap-2">
-                    <span class="badge bg-light bg-opacity-25 px-3 py-2">
-                        <i class="fas fa-satellite-dish me-1"></i> Live Data
-                    </span>
-                    <span class="badge bg-light bg-opacity-25 px-3 py-2">
-                        <i class="fas fa-sync-alt me-1"></i> Auto Refresh
-                    </span>
+                    <button class="badge bg-light bg-opacity-25 px-3 py-2 border-0" id="liveDataToggle">
+                        <i class="fas fa-satellite-dish me-1"></i> <span id="liveDataStatus">Live Data: ON</span>
+                    </button>
+                    <button class="badge bg-light bg-opacity-25 px-3 py-2 border-0" id="autoRefreshToggle">
+                        <i class="fas fa-sync-alt me-1"></i> <span id="autoRefreshStatus">Auto Refresh: ON</span>
+                    </button>
                 </div>
             </div>
         </div>
@@ -236,11 +236,11 @@
                 <div class="metric-icon" style="background: linear-gradient(45deg, #667eea, #764ba2);">
                     <i class="fas fa-bus"></i>
                 </div>
-                <div class="metric-value text-primary" id="active-buses-count">--</div>
+                <div class="metric-value text-primary" id="active-buses-count">0</div>
                 <h6 class="text-muted mb-0">Active Buses</h6>
                 <div class="metric-trend">
-                    <span class="text-success"><i class="fas fa-arrow-up"></i> 12%</span>
-                    <small class="text-muted ms-1">vs last week</small>
+                    <span class="text-muted"><i class="fas fa-minus"></i> No data</span>
+                    <small class="text-muted ms-1">Add buses to see trends</small>
                 </div>
             </div>
         </div>
@@ -249,11 +249,11 @@
                 <div class="metric-icon" style="background: linear-gradient(45deg, #f093fb, #f5576c);">
                     <i class="fas fa-route"></i>
                 </div>
-                <div class="metric-value text-danger" id="active-routes-count">--</div>
+                <div class="metric-value text-danger" id="active-routes-count">0</div>
                 <h6 class="text-muted mb-0">Active Routes</h6>
                 <div class="metric-trend">
-                    <span class="text-success"><i class="fas fa-arrow-up"></i> 8%</span>
-                    <small class="text-muted ms-1">vs last week</small>
+                    <span class="text-muted"><i class="fas fa-minus"></i> No data</span>
+                    <small class="text-muted ms-1">Add routes to see trends</small>
                 </div>
             </div>
         </div>
@@ -262,11 +262,11 @@
                 <div class="metric-icon" style="background: linear-gradient(45deg, #4facfe, #00f2fe);">
                     <i class="fas fa-map-marker-alt"></i>
                 </div>
-                <div class="metric-value text-info" id="stops-count">--</div>
+                <div class="metric-value text-info" id="stops-count">0</div>
                 <h6 class="text-muted mb-0">Bus Stops</h6>
                 <div class="metric-trend">
-                    <span class="text-success"><i class="fas fa-arrow-up"></i> 5%</span>
-                    <small class="text-muted ms-1">vs last week</small>
+                    <span class="text-muted"><i class="fas fa-minus"></i> No data</span>
+                    <small class="text-muted ms-1">Add stops to see trends</small>
                 </div>
             </div>
         </div>
@@ -275,11 +275,11 @@
                 <div class="metric-icon" style="background: linear-gradient(45deg, #fa709a, #fee140);">
                     <i class="fas fa-exclamation-triangle"></i>
                 </div>
-                <div class="metric-value text-warning" id="delayed-buses-count">--</div>
+                <div class="metric-value text-warning" id="delayed-buses-count">0</div>
                 <h6 class="text-muted mb-0">Delays</h6>
                 <div class="metric-trend">
-                    <span class="text-danger"><i class="fas fa-arrow-down"></i> 3%</span>
-                    <small class="text-muted ms-1">vs last week</small>
+                    <span class="text-muted"><i class="fas fa-minus"></i> No delays</span>
+                    <small class="text-muted ms-1">System running smoothly</small>
                 </div>
             </div>
         </div>
@@ -559,8 +559,38 @@
         // Load dashboard data
         loadDashboardData();
         
-        // Setup auto-refresh
-        setInterval(loadDashboardData, 30000); // Refresh every 30 seconds
+        // Live data and auto-refresh functionality
+        let liveDataEnabled = true;
+        let autoRefreshEnabled = true;
+        let refreshInterval;
+        
+        // Initialize live data controls
+        document.getElementById('liveDataToggle').addEventListener('click', function() {
+            liveDataEnabled = !liveDataEnabled;
+            document.getElementById('liveDataStatus').textContent = `Live Data: ${liveDataEnabled ? 'ON' : 'OFF'}`;
+            this.classList.toggle('bg-success', liveDataEnabled);
+            this.classList.toggle('bg-secondary', !liveDataEnabled);
+        });
+        
+        document.getElementById('autoRefreshToggle').addEventListener('click', function() {
+            autoRefreshEnabled = !autoRefreshEnabled;
+            document.getElementById('autoRefreshStatus').textContent = `Auto Refresh: ${autoRefreshEnabled ? 'ON' : 'OFF'}`;
+            this.classList.toggle('bg-success', autoRefreshEnabled);
+            this.classList.toggle('bg-secondary', !autoRefreshEnabled);
+            
+            if (autoRefreshEnabled) {
+                refreshInterval = setInterval(() => {
+                    if (liveDataEnabled) loadDashboardData();
+                }, 30000);
+            } else {
+                clearInterval(refreshInterval);
+            }
+        });
+        
+        // Start auto-refresh by default
+        refreshInterval = setInterval(() => {
+            if (liveDataEnabled && autoRefreshEnabled) loadDashboardData();
+        }, 30000);
         
         // Initialize all charts
         initAnalyticsCharts();
