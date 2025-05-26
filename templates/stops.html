@@ -54,7 +54,21 @@
                     </button>
                 </div>
             </div>
-            <div class="card-body p-0">
+            <div class="card-body p-0 position-relative">
+                <!-- Map Search Bar -->
+                <div class="position-absolute top-0 start-0 m-3" style="z-index: 1000; width: 350px;">
+                    <div class="input-group">
+                        <span class="input-group-text bg-white">
+                            <i class="fas fa-search text-primary"></i>
+                        </span>
+                        <input type="text" class="form-control" id="mapSearchInput" 
+                               placeholder="Search locations to add as bus stops...">
+                        <button class="btn btn-primary" type="button" id="addFromSearchBtn" disabled>
+                            <i class="fas fa-plus me-1"></i> Add Stop
+                        </button>
+                    </div>
+                    <small class="text-muted ms-2">Search and click "Add Stop" to quickly add new bus stops</small>
+                </div>
                 <div id="stop-map"></div>
             </div>
         </div>
@@ -611,8 +625,172 @@
         
         window.stopsMarkers = [];
         
+        // Initialize map search functionality
+        initMapSearch();
+        
         // Load stops from API
         loadStopsOnMap();
+    }
+    
+    function initMapSearch() {
+        const searchInput = document.getElementById('mapSearchInput');
+        const addBtn = document.getElementById('addFromSearchBtn');
+        let selectedPlace = null;
+        
+        // Create autocomplete for map search
+        const autocomplete = new google.maps.places.Autocomplete(searchInput, {
+            componentRestrictions: { country: 'in' },
+            types: ['establishment', 'geocode'],
+            fields: ['place_id', 'geometry', 'name', 'formatted_address']
+        });
+        
+        // When user selects a place from search
+        autocomplete.addListener('place_changed', function() {
+            const place = autocomplete.getPlace();
+            
+            if (!place.geometry || !place.geometry.location) {
+                return;
+            }
+            
+            selectedPlace = place;
+            addBtn.disabled = false;
+            addBtn.classList.remove('btn-secondary');
+            addBtn.classList.add('btn-success');
+            
+            // Center map on selected location
+            window.stopsMap.setCenter(place.geometry.location);
+            window.stopsMap.setZoom(16);
+            
+            // Add temporary marker
+            if (window.tempMarker) {
+                window.tempMarker.setMap(null);
+            }
+            
+            window.tempMarker = new google.maps.Marker({
+                position: place.geometry.location,
+                map: window.stopsMap,
+                title: 'Click "Add Stop" to add this location',
+                icon: {
+                    url: 'https://maps.google.com/mapfiles/ms/icons/green-dot.png',
+                    scaledSize: new google.maps.Size(32, 32)
+                },
+                animation: google.maps.Animation.BOUNCE
+            });
+            
+            setTimeout(() => {
+                if (window.tempMarker) {
+                    window.tempMarker.setAnimation(null);
+                }
+            }, 2000);
+        });
+        
+        // Handle "Add Stop" button click
+        addBtn.addEventListener('click', function() {
+            if (selectedPlace) {
+                addStopFromSearch(selectedPlace);
+            }
+        });
+        
+        // Reset button when search is cleared
+        searchInput.addEventListener('input', function() {
+            if (!this.value.trim()) {
+                addBtn.disabled = true;
+                addBtn.classList.remove('btn-success');
+                addBtn.classList.add('btn-secondary');
+                selectedPlace = null;
+                
+                if (window.tempMarker) {
+                    window.tempMarker.setMap(null);
+                    window.tempMarker = null;
+                }
+            }
+        });
+    }
+    
+    function addStopFromSearch(place) {
+        // Auto-generate stop code
+        const stopCode = 'ST' + Date.now().toString().slice(-6);
+        
+        const stopData = {
+            stop_code: stopCode,
+            name: place.name || extractLocationName(place.formatted_address),
+            address: place.formatted_address,
+            latitude: place.geometry.location.lat(),
+            longitude: place.geometry.location.lng(),
+            is_active: true
+        };
+        
+        // Show loading state
+        const addBtn = document.getElementById('addFromSearchBtn');
+        const originalText = addBtn.innerHTML;
+        addBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Adding...';
+        addBtn.disabled = true;
+        
+        // Save stop using API
+        fetch('/api/stops/add', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(stopData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Show success message
+                const alertDiv = document.createElement('div');
+                alertDiv.className = 'alert alert-success alert-dismissible fade show position-fixed';
+                alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; width: 300px;';
+                alertDiv.innerHTML = `
+                    <i class="fas fa-check-circle me-2"></i>
+                    Stop "${stopData.name}" added successfully!
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                `;
+                document.body.appendChild(alertDiv);
+                
+                // Reset search
+                document.getElementById('mapSearchInput').value = '';
+                addBtn.innerHTML = originalText;
+                addBtn.disabled = true;
+                addBtn.classList.remove('btn-success');
+                addBtn.classList.add('btn-secondary');
+                
+                // Remove temp marker
+                if (window.tempMarker) {
+                    window.tempMarker.setMap(null);
+                    window.tempMarker = null;
+                }
+                
+                // Refresh the map to show new stop
+                setTimeout(() => {
+                    loadStopsOnMap();
+                    alertDiv.remove();
+                }, 3000);
+                
+            } else {
+                throw new Error(data.message);
+            }
+        })
+        .catch(error => {
+            // Show error message
+            const alertDiv = document.createElement('div');
+            alertDiv.className = 'alert alert-danger alert-dismissible fade show position-fixed';
+            alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; width: 300px;';
+            alertDiv.innerHTML = `
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                Error: ${error.message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            document.body.appendChild(alertDiv);
+            
+            // Reset button
+            addBtn.innerHTML = originalText;
+            addBtn.disabled = false;
+            
+            setTimeout(() => {
+                alertDiv.remove();
+            }, 5000);
+        });
     }
     
     function loadStopsOnMap() {
