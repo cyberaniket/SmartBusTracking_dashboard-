@@ -3,6 +3,16 @@
 {% block title %}Stops - Smart Bus Tracking System{% endblock %}
 
 {% block head %}
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+     integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+     crossorigin=""/>
+
+<!-- Leaflet JavaScript -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+     integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+     crossorigin=""></script>
+
 <style>
     #stop-map {
         height: 500px;
@@ -11,6 +21,10 @@
     }
     .stop-detail-map {
         height: 250px;
+        border-radius: 4px;
+    }
+    #pickLocationMap {
+        height: 200px;
         border-radius: 4px;
     }
 </style>
@@ -557,15 +571,17 @@
     }
     
     // Initialize the stops map
-    let stopsMap;
-    let stopsMarkers = [];
-    
     function initStopsMap() {
-        stopsMap = L.map('stop-map').setView([51.505, -0.09], 13);
+        if (window.stopsMap) {
+            window.stopsMap.remove();
+        }
+        
+        window.stopsMap = L.map('stop-map').setView([20.5937, 78.9629], 6); // Center on India
+        window.stopsMarkers = [];
         
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; OpenStreetMap contributors'
-        }).addTo(stopsMap);
+        }).addTo(window.stopsMap);
         
         // Load stops from API
         loadStopsOnMap();
@@ -576,8 +592,8 @@
             .then(response => response.json())
             .then(stops => {
                 // Clear existing markers
-                stopsMarkers.forEach(marker => stopsMap.removeLayer(marker));
-                stopsMarkers = [];
+                window.stopsMarkers.forEach(marker => window.stopsMap.removeLayer(marker));
+                window.stopsMarkers = [];
                 
                 if (stops.length > 0) {
                     const bounds = L.latLngBounds();
@@ -594,7 +610,7 @@
                                         data-stop-id="${stop.id}">View Details</button>
                                 </div>
                             `)
-                            .addTo(stopsMap);
+                            .addTo(window.stopsMap);
                             
                         // Add click event to the View Details button in popup
                         marker.on('popupopen', function() {
