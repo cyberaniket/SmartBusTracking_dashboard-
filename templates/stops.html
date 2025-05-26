@@ -3,16 +3,6 @@
 {% block title %}Stops - Smart Bus Tracking System{% endblock %}
 
 {% block head %}
-<!-- Leaflet CSS -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-     integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
-     crossorigin=""/>
-
-<!-- Leaflet JavaScript -->
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-     integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
-     crossorigin=""></script>
-
 <style>
     #stop-map {
         height: 500px;
@@ -26,6 +16,13 @@
     #pickLocationMap {
         height: 200px;
         border-radius: 4px;
+    }
+    .address-suggestions {
+        max-height: 200px;
+        overflow-y: auto;
+        border: 1px solid #dee2e6;
+        border-radius: 0.375rem;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
     }
 </style>
 {% endblock %}
@@ -174,8 +171,7 @@
                     <div class="mb-3">
                         <label for="stopAddress" class="form-label">Address</label>
                         <input type="text" class="form-control" id="stopAddress" placeholder="Start typing address...">
-                        <div class="form-text">Address will be auto-completed as you type</div>
-                        <div id="addressSuggestions" class="list-group mt-1" style="display: none; position: absolute; z-index: 1050; width: calc(100% - 30px);"></div>
+                        <div class="form-text">Address will be auto-completed as you type using Google Places</div>
                     </div>
                     <div class="row mb-3">
                         <div class="col-6">
@@ -420,47 +416,50 @@
     });
     
     function initAddressAutocomplete() {
-        // Initialize Google Places services
+        // Initialize Google Places Autocomplete directly on input field
         if (typeof google !== 'undefined' && google.maps && google.maps.places) {
-            const autocompleteService = new google.maps.places.AutocompleteService();
-            const geocoder = new google.maps.Geocoder();
-            
             const addressInput = document.getElementById('stopAddress');
-            const suggestionsContainer = document.getElementById('addressSuggestions');
             
-            let searchTimeout;
+            // Create autocomplete object, restricting search to India
+            const autocomplete = new google.maps.places.Autocomplete(addressInput, {
+                componentRestrictions: { country: 'in' },
+                types: ['address', 'establishment', 'geocode'],
+                fields: ['place_id', 'geometry', 'name', 'formatted_address']
+            });
             
-            // Set up address input event listener
-            addressInput.addEventListener('input', function() {
-                const query = this.value.trim();
+            // Listen for the event fired when the user selects a prediction
+            autocomplete.addListener('place_changed', function() {
+                const place = autocomplete.getPlace();
                 
-                // Clear previous timeout
-                clearTimeout(searchTimeout);
-                
-                if (query.length < 3) {
-                    hideSuggestions();
+                if (!place.geometry || !place.geometry.location) {
+                    console.log("No details available for input: '" + place.name + "'");
                     return;
                 }
                 
-                // Debounce the search to avoid too many API calls
-                searchTimeout = setTimeout(() => {
-                    searchAddresses(query, autocompleteService);
-                }, 300);
-            });
-            
-            // Hide suggestions when clicking outside
-            document.addEventListener('click', function(e) {
-                if (!addressInput.contains(e.target) && !suggestionsContainer.contains(e.target)) {
-                    hideSuggestions();
+                // Auto-fill coordinates
+                const lat = place.geometry.location.lat();
+                const lng = place.geometry.location.lng();
+                
+                document.getElementById('stopLatitude').value = lat.toFixed(6);
+                document.getElementById('stopLongitude').value = lng.toFixed(6);
+                
+                // Auto-fill stop name if empty
+                const stopNameInput = document.getElementById('stopName');
+                if (!stopNameInput.value.trim()) {
+                    stopNameInput.value = place.name || 'Bus Stop';
+                }
+                
+                // Show success feedback
+                showAddressSelectedFeedback();
+                
+                // Update pick location map if modal is open
+                const modal = document.getElementById('addStopModal');
+                if (modal.classList.contains('show')) {
+                    updatePickLocationMap(lat, lng);
                 }
             });
             
-            // Hide suggestions when ESC is pressed
-            addressInput.addEventListener('keydown', function(e) {
-                if (e.key === 'Escape') {
-                    hideSuggestions();
-                }
-            });
+            console.log('Google Places Autocomplete initialized successfully');
         } else {
             console.log('Google Maps API not loaded. Address autocomplete will not work.');
         }
@@ -570,18 +569,30 @@
         }
     }
     
-    // Initialize the stops map
+    // Initialize the stops map using Google Maps
     function initStopsMap() {
-        if (window.stopsMap) {
-            window.stopsMap.remove();
+        if (typeof google !== 'undefined' && google.maps) {
+            setupGoogleStopsMap();
+        } else {
+            window.addEventListener('googleMapsReady', setupGoogleStopsMap);
         }
+    }
+    
+    function setupGoogleStopsMap() {
+        window.stopsMap = new google.maps.Map(document.getElementById('stop-map'), {
+            center: { lat: 20.5937, lng: 78.9629 }, // Center on India
+            zoom: 6,
+            mapTypeId: google.maps.MapTypeId.ROADMAP,
+            styles: [
+                {
+                    featureType: "poi",
+                    elementType: "labels",
+                    stylers: [{ visibility: "off" }]
+                }
+            ]
+        });
         
-        window.stopsMap = L.map('stop-map').setView([20.5937, 78.9629], 6); // Center on India
         window.stopsMarkers = [];
-        
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; OpenStreetMap contributors'
-        }).addTo(window.stopsMap);
         
         // Load stops from API
         loadStopsOnMap();
@@ -592,25 +603,38 @@
             .then(response => response.json())
             .then(stops => {
                 // Clear existing markers
-                window.stopsMarkers.forEach(marker => window.stopsMap.removeLayer(marker));
+                window.stopsMarkers.forEach(marker => marker.setMap(null));
                 window.stopsMarkers = [];
                 
                 if (stops.length > 0) {
-                    const bounds = L.latLngBounds();
+                    const bounds = new google.maps.LatLngBounds();
                     
                     stops.forEach(stop => {
-                        const marker = L.marker([stop.latitude, stop.longitude])
-                            .bindTooltip(`<b>${stop.stop_code}</b>: ${stop.name}`)
-                            .bindPopup(`
-                                <div>
+                        const marker = new google.maps.Marker({
+                            position: { lat: stop.latitude, lng: stop.longitude },
+                            map: window.stopsMap,
+                            title: `${stop.stop_code}: ${stop.name}`,
+                            icon: {
+                                url: 'https://maps.google.com/mapfiles/ms/icons/bus.png',
+                                scaledSize: new google.maps.Size(32, 32)
+                            }
+                        });
+                        
+                        const infoWindow = new google.maps.InfoWindow({
+                            content: `
+                                <div style="padding: 10px;">
                                     <h6>${stop.name}</h6>
                                     <p><strong>Code:</strong> ${stop.stop_code}</p>
                                     <p><strong>Address:</strong> ${stop.address || 'N/A'}</p>
                                     <button class="btn btn-sm btn-primary view-stop-btn" 
                                         data-stop-id="${stop.id}">View Details</button>
                                 </div>
-                            `)
-                            .addTo(window.stopsMap);
+                            `
+                        });
+                        
+                        marker.addListener('click', () => {
+                            infoWindow.open(window.stopsMap, marker);
+                        });
                             
                         // Add click event to the View Details button in popup
                         marker.on('popupopen', function() {
