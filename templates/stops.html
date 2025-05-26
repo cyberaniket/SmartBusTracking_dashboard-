@@ -657,21 +657,52 @@
             is_active: isActive
         };
         
-        // This would be replaced with an actual API call
-        console.log('Stop data to save:', stopData);
-        
-        // Simulate API call (in a real app, this would be a fetch POST request)
-        setTimeout(() => {
-            alert('Stop added successfully (simulated)');
-            
-            // Close modal and reset form
-            const modal = bootstrap.Modal.getInstance(document.getElementById('addStopModal'));
-            modal.hide();
-            document.getElementById('addStopForm').reset();
-            
-            // Refresh the stops map
-            refreshStopsMap();
-        }, 500);
+        // Save stop using real API
+        fetch('/api/stops/add', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(stopData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Show success message
+                const alertDiv = document.createElement('div');
+                alertDiv.className = 'alert alert-success alert-dismissible fade show';
+                alertDiv.innerHTML = `
+                    <i class="fas fa-check-circle me-2"></i>
+                    ${data.message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                `;
+                document.querySelector('.container-fluid').insertBefore(alertDiv, document.querySelector('.row'));
+                
+                // Close modal and reset form
+                const modal = bootstrap.Modal.getInstance(document.getElementById('addStopModal'));
+                modal.hide();
+                document.getElementById('addStopForm').reset();
+                hideSuggestions();
+                
+                // Refresh the stops map and reload page
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1500);
+            } else {
+                throw new Error(data.message);
+            }
+        })
+        .catch(error => {
+            // Show error message
+            const alertDiv = document.createElement('div');
+            alertDiv.className = 'alert alert-danger alert-dismissible fade show';
+            alertDiv.innerHTML = `
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                Error: ${error.message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            document.querySelector('.container-fluid').insertBefore(alertDiv, document.querySelector('.row'));
+        });
     }
     
     function viewStop(stopId) {
