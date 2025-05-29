@@ -130,7 +130,8 @@ def init_mqtt_client(app):
             mqtt_client.loop_start()
             logger.info("MQTT client started")
         except Exception as e:
-            logger.exception(f"Failed to connect to MQTT broker: {e}")
+            logger.error(f"Failed to connect to MQTT broker: {e}")
+            logger.info("Continuing without MQTT connection - bus data will need to be added manually")
 
 def stop_mqtt_client():
     """Stop the MQTT client"""
