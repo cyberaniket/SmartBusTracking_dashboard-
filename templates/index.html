@@ -550,11 +550,21 @@
     
     // Initialize the map when the page loads
     document.addEventListener('DOMContentLoaded', function() {
-        // Initialize the map focused on India
-        initMap();
+        // Wait for Google Maps API to be ready
+        function waitForGoogleMaps() {
+            if (typeof google !== 'undefined' && google.maps) {
+                // Initialize the map focused on India
+                initMap();
+                
+                // Add India search box
+                addIndiaSearchBox();
+            } else {
+                setTimeout(waitForGoogleMaps, 100);
+            }
+        }
         
-        // Add India search box
-        addIndiaSearchBox();
+        // Start checking for Google Maps
+        waitForGoogleMaps();
         
         // Load dashboard data
         loadDashboardData();
