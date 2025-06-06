@@ -29,21 +29,27 @@ app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 # Initialize database with app
 db.init_app(app)
 
-# Create database tables
-with app.app_context():
-    # Import models to ensure they are registered with SQLAlchemy
-    from models import Bus, Route, Stop, ScheduledStop, ETAPrediction, User, UserBusSubscription
-    
-    # Create all tables
-    db.create_all()
-    logger.info("Database tables created")
+# Import models to ensure they are registered with SQLAlchemy
+from models import Bus, Route, Stop, ScheduledStop, ETAPrediction, User, UserBusSubscription
 
 # Import and register routes
 from routes import register_routes
 register_routes(app)
 
-# Import and initialize the MQTT client
-from mqtt_client import init_mqtt_client
-init_mqtt_client(app)
-
-logger.info("Application initialized successfully")
+def init_app():
+    """Initialize the application components"""
+    try:
+        with app.app_context():
+            # Create all tables
+            db.create_all()
+            logger.info("Database tables created successfully")
+            
+        # Import and initialize the MQTT client
+        from mqtt_client import init_mqtt_client
+        init_mqtt_client(app)
+        
+        logger.info("Application initialized successfully")
+        return True
+    except Exception as e:
+        logger.error(f"Failed to initialize application: {e}")
+        return False
