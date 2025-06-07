@@ -1,192 +1,211 @@
+
 #include <WiFi.h>
 #include <PubSubClient.h>
-#include <SoftwareSerial.h>
 #include <ArduinoJson.h>
+#include <Wire.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
 
-// WiFi credentials
-const char* ssid = "YOUR_WIFI_SSID";
-const char* password = "YOUR_WIFI_PASSWORD";
-
-// MQTT broker settings
-const char* mqtt_server = "2b2fa545-09b1-48fc-8672-4b38200019c8-00-39zwajtl8y01.pike.replit.dev";
-const int mqtt_port = 1883;
+// WiFi/MQTT Configuration
+const char* ssid          = "CYBER3";
+const char* password      = "Gojo@#9970";
+const char* mqtt_server   = "2b2fa545-09b1-48fc-8672-4b38200019c8-00-39zwajtl8y01.pike.replit.dev";
+const int   mqtt_port     = 3000;  // Use external port 3000, not 1883
 const char* mqtt_username = "bus_device";
 const char* mqtt_password = "secure_mqtt_password_123";
+const char* bus_number    = "MH-12-CH-7798";
+const char* mqtt_topic    = "buses/B001/telemetry";
 
-// GPS module settings (using SoftwareSerial)
-SoftwareSerial gpsSerial(4, 2); // RX, TX pins
+// OLED and GPS config
+#define OLED_SDA 21
+#define OLED_SCL 22
+#define SCREEN_WIDTH 128
+#define SCREEN_HEIGHT 64
+#define OLED_RESET -1
 
-// Bus configuration
-const char* bus_number = "B001"; // Change this for each bus
-const char* mqtt_topic = "buses/B001/telemetry"; // Change B001 to match bus_number
+#define GPS_RX_PIN 16
+#define GPS_TX_PIN 17
 
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 WiFiClient espClient;
 PubSubClient client(espClient);
 
-// GPS data structure
+// GPS data struct
 struct GPSData {
   float latitude = 0.0;
   float longitude = 0.0;
   float speed = 0.0;
   float heading = 0.0;
   bool fix = false;
-};
+} gpsData;
 
-GPSData gpsData;
+int satelliteCount = 0;
 unsigned long lastMQTTSend = 0;
-const unsigned long SEND_INTERVAL = 5000; // Send data every 5 seconds
+const unsigned long SEND_INTERVAL = 5000;
 
 void setup() {
   Serial.begin(115200);
-  gpsSerial.begin(9600);
 
-  // Connect to WiFi
+  // OLED
+  Wire.begin(OLED_SDA, OLED_SCL);
+  display.begin(SSD1306_SWITCHCAPVCC, 0x3C);
+  display.clearDisplay();
+  display.setTextSize(1);
+  display.setTextColor(WHITE);
+  display.setCursor(0, 0);
+  display.println("Starting...");
+  display.display();
+
+  // GPS
+  Serial2.begin(9600, SERIAL_8N1, GPS_RX_PIN, GPS_TX_PIN);
+
+  // WiFi
   WiFi.begin(ssid, password);
+  display.setCursor(0, 10);
+  display.println("Connecting WiFi...");
+  display.display();
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
     Serial.print(".");
   }
-  Serial.println("\nWiFi connected!");
 
-  // Setup MQTT
+  display.clearDisplay();
+  display.setCursor(0, 0);
+  display.println("WiFi Connected");
+  display.println(WiFi.localIP());
+  display.display();
+
+  delay(1000);
+
+  // MQTT
   client.setServer(mqtt_server, mqtt_port);
   client.setCallback(onMqttMessage);
-
-  Serial.println("ESP32 Bus Tracker started");
 }
 
 void loop() {
-  // Maintain MQTT connection
-  if (!client.connected()) {
-    reconnectMQTT();
-  }
+  if (!client.connected()) reconnectMQTT();
   client.loop();
 
-  // Read GPS data
   readGPS();
 
-  // Send telemetry data every 5 seconds
-  if (millis() - lastMQTTSend >= SEND_INTERVAL && gpsData.fix) {
+  if (millis() - lastMQTTSend >= SEND_INTERVAL) {
     sendTelemetry();
     lastMQTTSend = millis();
   }
 
-  delay(100);
+  updateOLED();
+  delay(500); // Reduce flickering
 }
 
 void readGPS() {
-  while (gpsSerial.available()) {
-    String gpsString = gpsSerial.readStringUntil('\n');
+  while (Serial2.available()) {
+    String gpsString = Serial2.readStringUntil('\n');
 
-    if (gpsString.startsWith("$GPRMC") || gpsString.startsWith("$GNRMC")) {
+    if (gpsString.startsWith("$GPRMC")) {
       parseGPRMC(gpsString);
+    } else if (gpsString.startsWith("$GPGGA")) {
+      parseGPGGA(gpsString);
     }
   }
 }
 
 void parseGPRMC(String nmea) {
-  // Simple GPRMC parsing
-  int commaIndex[12];
-  int commaCount = 0;
+  int idx[12], cnt = 0;
+  for (int i = 0; i < nmea.length() && cnt < 12; i++) if (nmea[i] == ',') idx[cnt++] = i;
+  if (cnt < 9) return;
 
-  // Find all comma positions
-  for (int i = 0; i < nmea.length() && commaCount < 12; i++) {
-    if (nmea.charAt(i) == ',') {
-      commaIndex[commaCount] = i;
-      commaCount++;
-    }
-  }
-
-  if (commaCount < 9) return;
-
-  // Check if fix is valid (field 2)
-  String status = nmea.substring(commaIndex[1] + 1, commaIndex[2]);
+  String status = nmea.substring(idx[1] + 1, idx[2]);
   if (status != "A") {
     gpsData.fix = false;
     return;
   }
-
   gpsData.fix = true;
 
-  // Parse latitude (field 3 and 4)
-  String latStr = nmea.substring(commaIndex[2] + 1, commaIndex[3]);
-  String latDir = nmea.substring(commaIndex[3] + 1, commaIndex[4]);
-  if (latStr.length() > 0) {
-    float lat = latStr.toFloat();
-    int degrees = (int)(lat / 100);
-    float minutes = lat - (degrees * 100);
-    gpsData.latitude = degrees + (minutes / 60.0);
-    if (latDir == "S") gpsData.latitude *= -1;
+  String lat = nmea.substring(idx[2] + 1, idx[3]);
+  String latD = nmea.substring(idx[3] + 1, idx[4]);
+  if (lat.length()) {
+    float val = lat.toFloat();
+    int deg = int(val / 100);
+    gpsData.latitude = deg + (val - deg * 100) / 60.0;
+    if (latD == "S") gpsData.latitude *= -1;
   }
 
-  // Parse longitude (field 5 and 6)
-  String lonStr = nmea.substring(commaIndex[4] + 1, commaIndex[5]);
-  String lonDir = nmea.substring(commaIndex[5] + 1, commaIndex[6]);
-  if (lonStr.length() > 0) {
-    float lon = lonStr.toFloat();
-    int degrees = (int)(lon / 100);
-    float minutes = lon - (degrees * 100);
-    gpsData.longitude = degrees + (minutes / 60.0);
-    if (lonDir == "W") gpsData.longitude *= -1;
+  String lon = nmea.substring(idx[4] + 1, idx[5]);
+  String lonD = nmea.substring(idx[5] + 1, idx[6]);
+  if (lon.length()) {
+    float val = lon.toFloat();
+    int deg = int(val / 100);
+    gpsData.longitude = deg + (val - deg * 100) / 60.0;
+    if (lonD == "W") gpsData.longitude *= -1;
   }
 
-  // Parse speed (field 7) - convert from knots to km/h
-  String speedStr = nmea.substring(commaIndex[6] + 1, commaIndex[7]);
-  if (speedStr.length() > 0) {
-    gpsData.speed = speedStr.toFloat() * 1.852; // Convert knots to km/h
-  }
+  String sp = nmea.substring(idx[6] + 1, idx[7]);
+  if (sp.length()) gpsData.speed = sp.toFloat() * 1.852;
+}
 
-  // Parse heading (field 8)
-  String headingStr = nmea.substring(commaIndex[7] + 1, commaIndex[8]);
-  if (headingStr.length() > 0) {
-    gpsData.heading = headingStr.toFloat();
-  }
+void parseGPGGA(String nmea) {
+  int idx[15], cnt = 0;
+  for (int i = 0; i < nmea.length() && cnt < 15; i++) if (nmea[i] == ',') idx[cnt++] = i;
+  if (cnt < 8) return;
+
+  String sats = nmea.substring(idx[6] + 1, idx[7]);
+  if (sats.length()) satelliteCount = sats.toInt();
 }
 
 void sendTelemetry() {
-  // Create JSON payload
   StaticJsonDocument<200> doc;
   doc["latitude"] = gpsData.latitude;
   doc["longitude"] = gpsData.longitude;
   doc["speed"] = gpsData.speed;
   doc["heading"] = gpsData.heading;
-  doc["timestamp"] = WiFi.getTime();
+  doc["timestamp"] = millis();
 
   String payload;
   serializeJson(doc, payload);
-
-  // Publish to MQTT
-  if (client.publish(mqtt_topic, payload.c_str())) {
-    Serial.println("Telemetry sent: " + payload);
-  } else {
-    Serial.println("Failed to send telemetry");
-  }
+  client.publish(mqtt_topic, payload.c_str());
 }
 
 void reconnectMQTT() {
   while (!client.connected()) {
-    Serial.print("Attempting MQTT connection...");
-
+    Serial.print("Connecting MQTT...");
     String clientId = "ESP32-" + String(bus_number);
-
     if (client.connect(clientId.c_str(), mqtt_username, mqtt_password)) {
-      Serial.println("connected");
+      Serial.println("MQTT Connected");
     } else {
-      Serial.print("failed, rc=");
-      Serial.print(client.state());
-      Serial.println(" try again in 5 seconds");
-      delay(5000);
+      Serial.print("MQTT Failed, rc=");
+      Serial.println(client.state());
+      delay(2000);
     }
   }
 }
 
 void onMqttMessage(char* topic, byte* payload, unsigned int length) {
-  // Handle incoming MQTT messages if needed
-  Serial.print("Message arrived [");
+  Serial.print("Message [");
   Serial.print(topic);
   Serial.print("]: ");
-  for (int i = 0; i < length; i++) {
-    Serial.print((char)payload[i]);
-  }
+  for (unsigned int i = 0; i < length; i++) Serial.print((char)payload[i]);
   Serial.println();
+}
+
+void updateOLED() {
+  display.clearDisplay();
+  display.setCursor(0, 0);
+  display.setTextSize(1);
+
+  display.print("WiFi: ");
+  display.println(WiFi.SSID());
+
+  display.print("Lat: ");
+  display.println(gpsData.fix ? String(gpsData.latitude, 5) : "N/A");
+
+  display.print("Lon: ");
+  display.println(gpsData.fix ? String(gpsData.longitude, 5) : "N/A");
+
+  display.print("Sats: ");
+  display.println(satelliteCount);
+
+  display.print("MQTT: ");
+  display.println(client.connected() ? "Connected" : "Disconnected");
+
+  display.display();
 }
