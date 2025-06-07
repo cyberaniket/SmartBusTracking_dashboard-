@@ -9,10 +9,10 @@ const char* ssid = "YOUR_WIFI_SSID";
 const char* password = "YOUR_WIFI_PASSWORD";
 
 // MQTT broker settings
-const char* mqtt_server = "your-replit-domain.repl.co";  // Replace with your Replit domain
+const char* mqtt_server = "0.0.0.0";  // Use local MQTT broker
 const int mqtt_port = 1883;
 const char* mqtt_username = "bus_device";
-const char* mqtt_password = "your_mqtt_password";
+const char* mqtt_password = "secure_mqtt_password_123";
 
 // GPS module settings (using SoftwareSerial)
 SoftwareSerial gpsSerial(4, 2); // RX, TX pins
