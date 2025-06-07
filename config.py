@@ -25,12 +25,12 @@ class Config:
     INFLUXDB_BUCKET = os.environ.get("INFLUXDB_BUCKET", "bus_telemetry")
 
     # MQTT configuration
-    MQTT_BROKER = os.environ.get("MQTT_BROKER", "localhost")
-    MQTT_PORT = int(os.environ.get("MQTT_PORT", 1883))
-    MQTT_USERNAME = os.environ.get("MQTT_USERNAME", "")
-    MQTT_PASSWORD = os.environ.get("MQTT_PASSWORD", "")
-    MQTT_TOPIC = os.environ.get("MQTT_TOPIC", "buses/+/telemetry")
-    MQTT_CLIENT_ID = os.environ.get("MQTT_CLIENT_ID", "smart_bus_backend")
+    MQTT_BROKER = "0.0.0.0"  # Allow external connections
+    MQTT_PORT = 1883
+    MQTT_USERNAME = "bus_device"
+    MQTT_PASSWORD = "secure_mqtt_password_123"
+    MQTT_CLIENT_ID = "smart_bus_server"
+    MQTT_TOPIC = "buses/+/telemetry"
 
     # Firebase configuration for push notifications
     FIREBASE_CREDENTIALS = os.environ.get("FIREBASE_CREDENTIALS", "")
@@ -38,12 +38,12 @@ class Config:
 
     # Google Maps API configuration
     GOOGLE_MAPS_API_KEY = os.environ.get("GOOGLE_MAPS_API_KEY", "")
-    
+
     # Map settings
     DEFAULT_MAP_CENTER_LAT = float(os.environ.get("DEFAULT_MAP_CENTER_LAT", "20.5937"))  # Default India center
     DEFAULT_MAP_CENTER_LON = float(os.environ.get("DEFAULT_MAP_CENTER_LON", "78.9629"))  # Default India center
     DEFAULT_MAP_ZOOM = int(os.environ.get("DEFAULT_MAP_ZOOM", 5))  # Default zoom level for India
-    
+
     # Application settings
     BUS_UPDATE_INTERVAL = int(os.environ.get("BUS_UPDATE_INTERVAL", 5))  # seconds
     NOTIFICATION_DISTANCE = float(os.environ.get("NOTIFICATION_DISTANCE", 0.5))  # km

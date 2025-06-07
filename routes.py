@@ -58,6 +58,11 @@ def register_routes(app):
         """Render the notifications page"""
         return render_template('notifications.html')
     
+    @app.route('/devices')
+    def devices():
+        """Render the device management page"""
+        return render_template('devices.html')
+    
     # Export functionality
     @app.route('/api/export/buses', methods=['GET'])
     def export_buses():
@@ -511,6 +516,75 @@ def register_routes(app):
             logger.exception(f"Error updating subscription: {e}")
             return jsonify({'error': 'Failed to update subscription'}), 500
     
+    @app.route('/api/devices', methods=['GET'])
+    def api_devices():
+        """Get all registered devices/buses"""
+        try:
+            buses = db.session.query(Bus).all()
+            
+            result = []
+            for bus in buses:
+                device_data = {
+                    'id': bus.id,
+                    'bus_number': bus.bus_number,
+                    'license_plate': bus.license_plate,
+                    'is_active': bus.is_active,
+                    'last_updated': bus.last_updated.isoformat() if bus.last_updated else None,
+                    'current_position': {
+                        'latitude': bus.current_latitude,
+                        'longitude': bus.current_longitude,
+                        'speed': bus.current_speed,
+                        'heading': bus.heading
+                    } if bus.current_latitude else None
+                }
+                result.append(device_data)
+            
+            return jsonify(result)
+        
+        except Exception as e:
+            logger.exception(f"Error retrieving devices: {e}")
+            return jsonify({'error': 'Failed to retrieve devices'}), 500
+    
+    @app.route('/api/devices/register', methods=['POST'])
+    def api_register_device():
+        """Register a new ESP32 device/bus"""
+        try:
+            data = request.get_json()
+            
+            if not data or 'bus_number' not in data:
+                return jsonify({'error': 'bus_number is required'}), 400
+            
+            # Check if bus already exists
+            existing_bus = db.session.query(Bus).filter_by(
+                bus_number=data['bus_number']
+            ).first()
+            
+            if existing_bus:
+                return jsonify({'error': 'Bus already registered'}), 409
+            
+            # Create new bus
+            new_bus = Bus(
+                bus_number=data['bus_number'],
+                license_plate=data.get('license_plate', ''),
+                capacity=data.get('capacity', 50),
+                is_active=True
+            )
+            
+            db.session.add(new_bus)
+            db.session.commit()
+            
+            return jsonify({
+                'id': new_bus.id,
+                'bus_number': new_bus.bus_number,
+                'message': 'Device registered successfully',
+                'mqtt_topic': f"buses/{new_bus.bus_number}/telemetry"
+            }), 201
+        
+        except Exception as e:
+            db.session.rollback()
+            logger.exception(f"Error registering device: {e}")
+            return jsonify({'error': 'Failed to register device'}), 500
+
     @app.route('/api/user/unsubscribe', methods=['POST'])
     def api_unsubscribe():
         """Unsubscribe a user from notifications for a bus at a stop"""

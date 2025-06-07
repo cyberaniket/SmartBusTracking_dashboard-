@@ -1,0 +1,204 @@
+
+{% extends "base.html" %}
+
+{% block title %}Device Management - Smart Bus Tracking System{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="h3 mb-3">Device Management</h1>
+            
+            <!-- Device Registration Card -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Register New ESP32 Device</h5>
+                </div>
+                <div class="card-body">
+                    <form id="deviceRegistrationForm">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <label for="busNumber" class="form-label">Bus Number</label>
+                                    <input type="text" class="form-control" id="busNumber" required>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <label for="licensePlate" class="form-label">License Plate</label>
+                                    <input type="text" class="form-control" id="licensePlate">
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="mb-3">
+                                    <label for="capacity" class="form-label">Capacity</label>
+                                    <input type="number" class="form-control" id="capacity" value="50">
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="mb-3">
+                                    <label class="form-label">&nbsp;</label>
+                                    <button type="submit" class="btn btn-primary d-block">Register Device</button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- MQTT Configuration Card -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">MQTT Configuration for ESP32</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>MQTT Broker:</strong> <code id="mqttBroker">your-replit-domain.repl.co</code></p>
+                            <p><strong>Port:</strong> <code>1883</code></p>
+                            <p><strong>Username:</strong> <code>bus_device</code></p>
+                            <p><strong>Password:</strong> <code>secure_mqtt_password_123</code></p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Topic Format:</strong> <code>buses/{BUS_NUMBER}/telemetry</code></p>
+                            <p><strong>Example:</strong> <code>buses/B001/telemetry</code></p>
+                            <small class="text-muted">Replace {BUS_NUMBER} with your actual bus number</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Registered Devices -->
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Registered Devices</h5>
+                    <button class="btn btn-sm btn-outline-primary" onclick="loadDevices()">
+                        <i class="fas fa-sync-alt"></i> Refresh
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="devicesTable">
+                            <thead>
+                                <tr>
+                                    <th>Bus Number</th>
+                                    <th>License Plate</th>
+                                    <th>Status</th>
+                                    <th>Last Updated</th>
+                                    <th>Current Position</th>
+                                    <th>MQTT Topic</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="devicesTableBody">
+                                <!-- Devices will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Set MQTT broker URL
+    document.getElementById('mqttBroker').textContent = window.location.hostname + '.repl.co';
+    
+    // Load devices on page load
+    loadDevices();
+    
+    // Handle device registration form
+    document.getElementById('deviceRegistrationForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        registerDevice();
+    });
+});
+
+function loadDevices() {
+    fetch('/api/devices')
+        .then(response => response.json())
+        .then(devices => {
+            const tbody = document.getElementById('devicesTableBody');
+            tbody.innerHTML = '';
+            
+            devices.forEach(device => {
+                const row = document.createElement('tr');
+                
+                const statusBadge = device.is_active ? 
+                    '<span class="badge bg-success">Active</span>' : 
+                    '<span class="badge bg-secondary">Inactive</span>';
+                
+                const lastUpdated = device.last_updated ? 
+                    new Date(device.last_updated).toLocaleString() : 'Never';
+                
+                const position = device.current_position ? 
+                    `${device.current_position.latitude.toFixed(6)}, ${device.current_position.longitude.toFixed(6)}` : 
+                    'No data';
+                
+                const mqttTopic = `buses/${device.bus_number}/telemetry`;
+                
+                row.innerHTML = `
+                    <td><strong>${device.bus_number}</strong></td>
+                    <td>${device.license_plate || '-'}</td>
+                    <td>${statusBadge}</td>
+                    <td>${lastUpdated}</td>
+                    <td><small>${position}</small></td>
+                    <td><code>${mqttTopic}</code></td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary" onclick="viewDevice(${device.id})">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </td>
+                `;
+                
+                tbody.appendChild(row);
+            });
+        })
+        .catch(error => {
+            console.error('Error loading devices:', error);
+            alert('Failed to load devices');
+        });
+}
+
+function registerDevice() {
+    const busNumber = document.getElementById('busNumber').value;
+    const licensePlate = document.getElementById('licensePlate').value;
+    const capacity = document.getElementById('capacity').value;
+    
+    const data = {
+        bus_number: busNumber,
+        license_plate: licensePlate,
+        capacity: parseInt(capacity)
+    };
+    
+    fetch('/api/devices/register', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.message) {
+            alert(`Device registered successfully!\nMQTT Topic: ${result.mqtt_topic}`);
+            document.getElementById('deviceRegistrationForm').reset();
+            loadDevices();
+        } else {
+            alert('Error: ' + result.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error registering device:', error);
+        alert('Failed to register device');
+    });
+}
+
+function viewDevice(deviceId) {
+    // Redirect to bus details or show modal
+    window.location.href = `/api/bus/${deviceId}`;
+}
+</script>
+{% endblock %}
