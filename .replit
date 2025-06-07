@@ -32,7 +32,7 @@ waitForPort = 5000
 [[workflows.workflow]]
 name = "Start MQTT Broker"
 author = 43250023
-mode = "sequential"
+mode = "parallel"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
