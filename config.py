@@ -25,7 +25,7 @@ class Config:
     INFLUXDB_BUCKET = os.environ.get("INFLUXDB_BUCKET", "telemetry")
 
     # MQTT Configuration
-    MQTT_BROKER = os.environ.get("MQTT_BROKER", "0.0.0.0")
+    MQTT_BROKER = os.environ.get("MQTT_BROKER", "127.0.0.1")  # Connect to local broker
     MQTT_PORT = int(os.environ.get("MQTT_PORT", "1883"))
     MQTT_TOPIC = os.environ.get("MQTT_TOPIC", "buses/+/telemetry")
     MQTT_CLIENT_ID = os.environ.get("MQTT_CLIENT_ID", "smart_bus_server")
