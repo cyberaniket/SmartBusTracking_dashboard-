@@ -1,22 +1,20 @@
 
 #!/usr/bin/env python3
-import asyncio
 import logging
 from mqtt_broker import SimpleMQTTBroker
 
 logging.basicConfig(level=logging.INFO)
 
-async def main():
+def main():
     broker = SimpleMQTTBroker()
-    await broker.start_broker()
     
     try:
-        while True:
-            await asyncio.sleep(1)
+        print("Starting MQTT broker...")
+        broker.start_broker()
     except KeyboardInterrupt:
         print("Shutting down MQTT broker...")
     finally:
-        await broker.stop_broker()
+        broker.stop_broker()
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()
