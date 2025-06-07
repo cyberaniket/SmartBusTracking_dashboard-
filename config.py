@@ -21,16 +21,16 @@ class Config:
     # InfluxDB configuration
     INFLUXDB_URL = os.environ.get("INFLUXDB_URL", "http://localhost:8086")
     INFLUXDB_TOKEN = os.environ.get("INFLUXDB_TOKEN", "")
-    INFLUXDB_ORG = os.environ.get("INFLUXDB_ORG", "smart_bus")
-    INFLUXDB_BUCKET = os.environ.get("INFLUXDB_BUCKET", "bus_telemetry")
+    INFLUXDB_ORG = os.environ.get("INFLUXDB_ORG", "bus_tracking")
+    INFLUXDB_BUCKET = os.environ.get("INFLUXDB_BUCKET", "telemetry")
 
-    # MQTT configuration
-    MQTT_BROKER = "0.0.0.0"  # Allow external connections
-    MQTT_PORT = 1883
-    MQTT_USERNAME = "bus_device"
-    MQTT_PASSWORD = "secure_mqtt_password_123"
-    MQTT_CLIENT_ID = "smart_bus_server"
-    MQTT_TOPIC = "buses/+/telemetry"
+    # MQTT Configuration
+    MQTT_BROKER = os.environ.get("MQTT_BROKER", "0.0.0.0")
+    MQTT_PORT = int(os.environ.get("MQTT_PORT", "1883"))
+    MQTT_TOPIC = os.environ.get("MQTT_TOPIC", "buses/+/telemetry")
+    MQTT_CLIENT_ID = os.environ.get("MQTT_CLIENT_ID", "smart_bus_server")
+    MQTT_USERNAME = os.environ.get("MQTT_USERNAME", "")
+    MQTT_PASSWORD = os.environ.get("MQTT_PASSWORD", "")
 
     # Firebase configuration for push notifications
     FIREBASE_CREDENTIALS = os.environ.get("FIREBASE_CREDENTIALS", "")

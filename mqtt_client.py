@@ -13,15 +13,16 @@ from eta_predictor import update_eta_predictions
 # Configure logging
 logger = logging.getLogger(__name__)
 
-# Global MQTT client
+# Global MQTT client and app reference
 mqtt_client = None
+flask_app = None
 
 def on_connect(client, userdata, flags, rc):
     """Callback for when the client connects to the MQTT broker"""
     if rc == 0:
         logger.info("Connected to MQTT broker")
         # Subscribe to the topic for all buses
-        topic = current_app.config["MQTT_TOPIC"]
+        topic = "buses/+/telemetry"  # Use wildcard pattern for all buses
         client.subscribe(topic)
         logger.info(f"Subscribed to {topic}")
     else:
@@ -66,42 +67,54 @@ def on_message(client, userdata, msg):
 
 def update_bus_position(bus_number, telemetry):
     """Update the bus position in the PostgreSQL database"""
+    global flask_app
+    
+    if not flask_app:
+        logger.error("Flask app not available for database operations")
+        return
+        
     try:
-        # Get current timestamp or use the one from telemetry
-        if 'timestamp' in telemetry:
-            timestamp = datetime.fromtimestamp(telemetry['timestamp'])
-        else:
-            timestamp = datetime.utcnow()
-        
-        # Find the bus in the database
-        bus = db.session.query(Bus).filter_by(bus_number=bus_number).first()
-        
-        if bus:
-            # Update bus location and status
-            bus.current_latitude = telemetry['latitude']
-            bus.current_longitude = telemetry['longitude']
-            bus.current_speed = telemetry['speed']
-            bus.last_updated = timestamp
+        with flask_app.app_context():
+            # Get current timestamp or use the one from telemetry
+            if 'timestamp' in telemetry:
+                timestamp = datetime.fromtimestamp(telemetry['timestamp'])
+            else:
+                timestamp = datetime.utcnow()
             
-            # Update heading if provided
-            if 'heading' in telemetry:
-                bus.heading = telemetry['heading']
+            # Find the bus in the database
+            bus = db.session.query(Bus).filter_by(bus_number=bus_number).first()
             
-            # Commit changes to database
-            db.session.commit()
-            logger.debug(f"Updated position for bus {bus_number}")
-        else:
-            logger.warning(f"Bus {bus_number} not found in database")
+            if bus:
+                # Update bus location and status
+                bus.current_latitude = telemetry['latitude']
+                bus.current_longitude = telemetry['longitude']
+                bus.current_speed = telemetry['speed']
+                bus.last_updated = timestamp
+                
+                # Update heading if provided
+                if 'heading' in telemetry:
+                    bus.heading = telemetry['heading']
+                
+                # Commit changes to database
+                db.session.commit()
+                logger.debug(f"Updated position for bus {bus_number}")
+            else:
+                logger.warning(f"Bus {bus_number} not found in database")
     
     except SQLAlchemyError as e:
-        db.session.rollback()
+        if flask_app:
+            with flask_app.app_context():
+                db.session.rollback()
         logger.error(f"Database error updating bus position: {e}")
     except Exception as e:
         logger.exception(f"Error updating bus position: {e}")
 
 def init_mqtt_client(app):
     """Initialize the MQTT client with the application context"""
-    global mqtt_client
+    global mqtt_client, flask_app
+    
+    # Store app reference for use in callbacks
+    flask_app = app
     
     with app.app_context():
         # Create MQTT client
